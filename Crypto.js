@@ -1,6 +1,6 @@
 /**
  * ==========================================
- * 📌 代码名称: 🪙 Crypto Dashboard (图标进化竖向版)
+ * 📌 代码名称: 🪙 Crypto Dashboard (精简无底栏 + 右上角时间)
  * ==========================================
  */
 export default async function(ctx) {
@@ -17,7 +17,6 @@ export default async function(ctx) {
   const SYMBOLS = '["BTCUSDT","ETHUSDT","BNBUSDT"]';
   const API_URL = `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(SYMBOLS)}`;
 
-  // 💡 给每个币种配上专属的系统图标和品牌主色调
   const COIN_MAP = {
     "BTCUSDT": { symbol: "BTC", icon: "bitcoinsign.circle.fill", color: "#F7931A" },
     "ETHUSDT": { symbol: "ETH", icon: "diamond.fill",            color: "#627EEA" },
@@ -37,12 +36,11 @@ export default async function(ctx) {
     return sign + change.toFixed(2) + "%"; 
   };
 
-  // 💡 新增：格式化交易量 (将长数字转为 K/M/B)
   const formatVol = (vol) => {
     const v = parseFloat(vol);
-    if (v >= 1e9) return (v / 1e9).toFixed(2) + "B";
-    if (v >= 1e6) return (v / 1e6).toFixed(2) + "M";
-    if (v >= 1e3) return (v / 1e3).toFixed(2) + "K";
+    if (v >= 1e9) return (v / 1e9).toFixed(1) + "B";
+    if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
+    if (v >= 1e3) return (v / 1e3).toFixed(1) + "K";
     return v.toFixed(0);
   };
 
@@ -69,54 +67,64 @@ export default async function(ctx) {
   const vstack = (children, opts) => ({ type: "stack", direction: "column", alignItems: "start", children, ...opts });
   const spacer = (length) => length != null ? { type: "spacer", length } : { type: "spacer" };
 
-  // 💡 新增：带透明背景的圆形币种 Icon
+  const dateTxt = (dateStr, style, fontSize, weight, color) => ({
+    type: "date",
+    date: dateStr,
+    format: style,
+    font: { size: fontSize, weight: weight || "medium" },
+    textColor: color || THEME.textSec,
+  });
+
   const coinIcon = (info, size) => {
     const pad = Math.round(size * 0.25);
     const total = size + pad * 2;
     return vstack([icon(info.icon, size, info.color)], {
       alignItems: "center",
       padding: [pad, pad, pad, pad],
-      backgroundColor: info.color + "20", // 20 相当于 12% 左右透明度
+      backgroundColor: info.color + "20",
       borderRadius: total / 2,
     });
   };
 
-  // ==========================================
-  // 构建单行列表项 (带图标进化版)
-  // ==========================================
+  // 💡 修改：顶部标题栏加入右上角时间
+  const headerBar = () => hstack([
+    icon("chart.line.uptrend.xyaxis.circle.fill", 12, THEME.text),
+    spacer(4),
+    txt("Majors Dashboard", 13, "bold", THEME.text),
+    spacer(), // 弹簧撑开，把时间推到最右侧
+    dateTxt(new Date().toISOString(), "time", 10, "medium", THEME.textSec) // 右上角的时间
+  ]);
+
   const coinListItem = (id, priceInfo) => {
     const info = COIN_MAP[id];
     const price = parseFloat(priceInfo.lastPrice);
     const high = parseFloat(priceInfo.highPrice);
     const low = parseFloat(priceInfo.lowPrice);
     const change = parseFloat(priceInfo.priceChangePercent);
-    const quoteVol = parseFloat(priceInfo.quoteVolume); // 取 USDT 交易额
+    const quoteVol = parseFloat(priceInfo.quoteVolume);
 
-    // 左列：Icon图标 + (大号缩写 + 交易量)
     const leftCol = hstack([
-      coinIcon(info, 18), // 渲染彩色图标
-      spacer(10),
+      coinIcon(info, 16), 
+      spacer(8),
       vstack([
-        txt(info.symbol, 16, "bold", THEME.text),
-        spacer(2),
-        txt("Vol:" + formatVol(quoteVol), 10, "medium", THEME.textSec) // 加入交易量
+        txt(info.symbol, 14, "bold", THEME.text),
+        spacer(1),
+        txt("Vol:" + formatVol(quoteVol), 9, "medium", THEME.textSec)
       ])
     ]);
 
-    // 中列：当前价格 + 高低点
     const midCol = vstack([
-      txt(formatPrice(price), 16, "bold", THEME.text),
-      spacer(2),
-      txt(`H:${formatPrice(high).replace('$', '')} L:${formatPrice(low).replace('$', '')}`, 10, "medium", THEME.textSec)
+      txt(formatPrice(price), 14, "bold", THEME.text),
+      spacer(1),
+      txt(`H:${formatPrice(high).replace('$', '')} L:${formatPrice(low).replace('$', '')}`, 9, "medium", THEME.textSec)
     ], { alignItems: "end" });
 
-    // 右列：涨跌幅色块
     const rightPill = vstack([
-      txt(formatChange(change), 12, "bold", THEME.white)
+      txt(formatChange(change), 11, "bold", THEME.white)
     ], {
       backgroundColor: changeColor(change),
-      borderRadius: 5,           
-      padding: [4, 8, 4, 8],   
+      borderRadius: 4,           
+      padding: [3, 6, 3, 6],   
       alignItems: "center"
     });
 
@@ -124,7 +132,7 @@ export default async function(ctx) {
       leftCol,
       spacer(),   
       midCol,
-      spacer(12), 
+      spacer(10), 
       rightPill
     ]); 
   };
@@ -133,33 +141,33 @@ export default async function(ctx) {
   try {
     const resp = await ctx.http.get(API_URL);
     const pricesArray = await resp.json(); 
-    
     const prices = {};
     for (const item of pricesArray) {
       prices[item.symbol] = item;
     }
     
     let widget;
-    
     if (family === "systemMedium" || !family) {
       const listRows = RENDER_ORDER.map(id => coinListItem(id, prices[id]));
-
       const content = [];
       for (let i = 0; i < listRows.length; i++) {
         content.push(listRows[i]);
-        if (i < listRows.length - 1) content.push(spacer(16)); 
+        if (i < listRows.length - 1) content.push(spacer(12)); 
       }
 
       widget = {
         type: "widget",
-        padding: [20, 16, 20, 16], // 稍微调整左右边距给图标让出空间
+        // 💡 调整：去掉了底栏后，把上下边距改为对称的 16，让整体内容垂直居中更完美
+        padding: [16, 16, 16, 16], 
         backgroundColor: THEME.bg,
         children: [
+          headerBar(), // 插入头部（带右上角时间）
+          spacer(14),  // 增加头部和列表之间的呼吸感
           vstack(content, { flex: 1, justifyContent: "center" })
+          // 去掉了底部的 spacer 和 footerBar
         ]
       };
-    } 
-    else {
+    } else {
       widget = {
         type: "widget", padding: [16, 20], backgroundColor: THEME.bg,
         children: [{ type: "text", text: "Please use Medium widget.", font: { size: 14 }, textColor: THEME.text }]
@@ -171,11 +179,7 @@ export default async function(ctx) {
   } catch (e) {
     return {
       type: "widget", padding: [16, 20], backgroundColor: THEME.bg,
-      children: [
-        { type: "text", text: "⚠️ 数据加载失败", font: { size: 14, weight: "bold" }, textColor: THEME.red },
-        { type: "spacer", length: 8 },
-        { type: "text", text: "请检查网络或稍后再试", font: { size: 12, weight: "medium" }, textColor: THEME.textSec }
-      ]
+      children: [{ type: "text", text: "⚠️ 数据加载失败", font: { size: 14, weight: "bold" }, textColor: THEME.red }]
     };
   }
 }
