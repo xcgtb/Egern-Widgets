@@ -1,6 +1,6 @@
 /**
  * ==========================================
- * 📌 代码名称: 🪙 Crypto Dashboard (4 大主流币 宽广舒展版)
+ * 📌 代码名称: 🪙 Crypto Dashboard (4 大主流币 币安稳定版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -15,18 +15,20 @@ export default async function(ctx) {
     red:     { light: '#FF3B30', dark: '#FF453A' }  
   };
 
-  // 💡 只保留 4 个绝对主流的币种：BTC, ETH, SOL, BNB
-  const COINS = "bitcoin,ethereum,solana,binancecoin";
-  const API_URL = `https://api.coingecko.com/api/v3/simple/price?ids=${COINS}&vs_currencies=usd&include_24hr_change=true`;
+  // 💡 改用币安 (Binance) API，稳定性极高，不易被风控限制
+  const SYMBOLS = '["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT"]';
+  const API_URL = `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(SYMBOLS)}`;
 
+  // 映射字典改为匹配币安的 Symbol
   const COIN_MAP = {
-    bitcoin:      { symbol: "BTC",  name: "Bitcoin",   icon: "bitcoinsign.circle.fill",  color: "#F7931A" },
-    ethereum:     { symbol: "ETH",  name: "Ethereum",  icon: "diamond.fill",             color: "#627EEA" },
-    solana:       { symbol: "SOL",  name: "Solana",    icon: "sun.max.fill",             color: "#9945FF" },
-    binancecoin:  { symbol: "BNB",  name: "BNB Chain", icon: "hexagon.fill",             color: "#F3BA2F" }
+    "BTCUSDT": { symbol: "BTC",  name: "Bitcoin",   icon: "bitcoinsign.circle.fill",  color: "#F7931A" },
+    "ETHUSDT": { symbol: "ETH",  name: "Ethereum",  icon: "diamond.fill",             color: "#627EEA" },
+    "SOLUSDT": { symbol: "SOL",  name: "Solana",    icon: "sun.max.fill",             color: "#9945FF" },
+    "BNBUSDT": { symbol: "BNB",  name: "BNB Chain", icon: "hexagon.fill",             color: "#F3BA2F" }
   };
 
-  const ALL_IDS = Object.keys(COIN_MAP);
+  // 保证按照固定的顺序渲染
+  const RENDER_ORDER = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 
   const formatPrice = (price) => {
     if (price >= 1000) return "$" + price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -37,7 +39,7 @@ export default async function(ctx) {
   const formatChange = (change) => {
     if (change == null) return "+0.0%";
     const sign = change >= 0 ? "+" : "";
-    return sign + change.toFixed(2) + "%"; // 空间大了，涨跌幅可以保留两位小数
+    return sign + change.toFixed(2) + "%"; 
   };
 
   const changeColor = (change) => change >= 0 ? THEME.green : THEME.red;
@@ -77,7 +79,7 @@ export default async function(ctx) {
     return vstack([icon(info.icon, size, info.color)], {
       alignItems: "center",
       padding: [pad, pad, pad, pad],
-      backgroundColor: info.color + "25", // 降低一点背景透明度，看起来更高级
+      backgroundColor: info.color + "25", 
       borderRadius: total / 2,
     });
   };
@@ -98,31 +100,36 @@ export default async function(ctx) {
     icon("clock.arrow.circlepath", 10, THEME.textSec),
     dateTxt(new Date().toISOString(), "relative", 10, "medium", THEME.textSec),
     spacer(),
-    txt("CoinGecko", 10, "medium", THEME.textSec),
+    txt("Binance", 10, "medium", THEME.textSec), // 数据源标识改为币安
   ], { gap: 4 });
 
-  // 🌟 放大版的网格图块
-  const coinGridItem = (id, data) => {
+  const coinGridItem = (id, priceInfo) => {
     const info = COIN_MAP[id];
-    const change = data.usd_24h_change;
+    const price = parseFloat(priceInfo.lastPrice);
+    const change = parseFloat(priceInfo.priceChangePercent);
 
     return vstack([
-      coinIcon(info, 22), // 图标放大
+      coinIcon(info, 22), 
       spacer(8),
-      txt(info.symbol, 14, "bold", THEME.text), // 币种代号放大
+      txt(info.symbol, 14, "bold", THEME.text), 
       spacer(3),
-      txt(formatPrice(data.usd), 12, "medium", THEME.text, { maxLines: 1 }), // 价格放大
+      txt(formatPrice(price), 12, "medium", THEME.text, { maxLines: 1 }), 
       spacer(2),
-      txt(formatChange(change), 11, "bold", changeColor(change)) // 涨跌幅放大
+      txt(formatChange(change), 11, "bold", changeColor(change)) 
     ], { alignItems: "center", flex: 1 }); 
   };
-
-  const filterAvailable = (ids, prices) => ids.filter(id => prices[id]);
 
   const family = ctx.widgetFamily;
   try {
     const resp = await ctx.http.get(API_URL);
-    const prices = await resp.json();
+    // 币安返回的是个数组: [{symbol: "BTCUSDT", lastPrice: "...", priceChangePercent: "..."}, ...]
+    const pricesArray = await resp.json(); 
+    
+    // 把数组转成更好查的字典 { "BTCUSDT": {...}, ... }
+    const prices = {};
+    for (const item of pricesArray) {
+      prices[item.symbol] = item;
+    }
     
     let widget;
     
@@ -130,23 +137,18 @@ export default async function(ctx) {
     // 中尺寸组件 (1x4 舒展网格布局)
     // ==========================================
     if (family === "systemMedium" || !family) {
-      const ids = filterAvailable(ALL_IDS, prices);
-      
-      // 一排 4 个直接铺开
-      const mainRow = ids.map(id => coinGridItem(id, prices[id]));
+      // 按照 RENDER_ORDER 的顺序映射出图块
+      const mainRow = RENDER_ORDER.map(id => coinGridItem(id, prices[id]));
 
       widget = {
         type: "widget",
         gap: 0,
-        padding: [16, 20], // 增加整体边缘留白
+        padding: [16, 20], 
         backgroundColor: THEME.bg,
         children: [
-          headerBar("Majors Dashboard", 15, 16, true), // 标题也适当放大
-          spacer(), // 使用弹性空间把内容推到中间
-          
-          // 核心数据区：1行4列
+          headerBar("Majors Dashboard", 15, 16, true), 
+          spacer(), 
           hstack(mainRow, { gap: 12, alignItems: "center" }),
-          
           spacer(),
           footerBar(),
         ]
@@ -162,9 +164,14 @@ export default async function(ctx) {
     widget.refreshAfter = new Date(Date.now() + 60 * 1000).toISOString();
     return widget;
   } catch (e) {
+    // 捕获到错误时打印具体的提示，避免彻底白屏
     return {
       type: "widget", padding: [16, 20], backgroundColor: THEME.bg,
-      children: [{ type: "text", text: "网络加载失败或 API 限制", font: { size: 14, weight: "medium" }, textColor: THEME.red }]
+      children: [
+        { type: "text", text: "⚠️ 数据请求失败", font: { size: 16, weight: "bold" }, textColor: THEME.red },
+        { type: "spacer", length: 8 },
+        { type: "text", text: "请检查网络或稍后再试。", font: { size: 12, weight: "medium" }, textColor: THEME.textSec }
+      ]
     };
   }
 }
