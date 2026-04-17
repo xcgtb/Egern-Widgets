@@ -81,7 +81,7 @@ scriptings:
       
   - generic:
       name: 加密货币-Crypto
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Crypto.js
+      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Crypto.js?v=123
 
 # --- 面板展示区 ---
 widgets:
