@@ -90,7 +90,7 @@ export default async function(ctx) {
   const headerBar = () => hstack([
     icon("chart.line.uptrend.xyaxis.circle.fill", 12, THEME.text),
     spacer(4),
-    txt("Majors Dashboard", 13, "bold", THEME.text),
+    txt("Crypto Dashboard", 13, "bold", THEME.text),
     spacer(), // 弹簧撑开，把时间推到最右侧
     dateTxt(new Date().toISOString(), "time", 10, "medium", THEME.textSec) // 右上角的时间
   ]);
