@@ -1,5 +1,5 @@
 /*
- * 名称: 📅 日历 / 老黄历 (极简比例优化防吞字版)
+ * 名称: 📅 日历 / 老黄历 (大字体自适应防错位版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -155,51 +155,53 @@ export default async function(ctx) {
         type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
         children: [
           { type: 'image', src: 'sf-symbol:calendar.circle.fill', color: C.main, width: 14, height: 14 }, 
-          { type: 'text', text: `${Y}年${M}月${D}日`, font: { size: 13, weight: 'heavy' }, textColor: C.main },
+          // 顶部栏文本加入缩放保护
+          { type: 'text', text: `${Y}年${M}月${D}日`, font: { size: 13, weight: 'heavy' }, textColor: C.main, minimumScaleFactor: 0.8 },
           { type: 'spacer' },
-          { type: 'text', text: shichenStr, font: { size: 11, weight: 'bold' }, textColor: C.muted }
+          { type: 'text', text: shichenStr, font: { size: 11, weight: 'bold' }, textColor: C.muted, minimumScaleFactor: 0.8 }
         ]
       },
       { type: 'spacer', length: 6 }, 
       {
-        type: 'stack', direction: 'row', alignItems: 'center', gap: 10, 
+        // 左右两块的主容器，gap稍微调小，防挤压
+        type: 'stack', direction: 'row', alignItems: 'center', gap: 8, 
         children: [
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: C.cardBg, borderRadius: 10, padding: [3, 5], 
+            backgroundColor: C.cardBg, borderRadius: 10, padding: [4, 4], 
             children: [
-              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday, maxLines: 1 }, 
+              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday, maxLines: 1, minimumScaleFactor: 0.6 }, 
               { type: 'spacer', length: 1 },
-              { type: 'text', text: `${D}`, font: { size: 22, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1 }, 
+              { type: 'text', text: `${D}`, font: { size: 22, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1, minimumScaleFactor: 0.6 }, 
               { type: 'spacer', length: 1 },
-              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold, maxLines: 1 } 
+              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold, maxLines: 1, minimumScaleFactor: 0.6 } 
             ]
           },
           {
-            type: 'stack', direction: 'column', gap: 3, flex: 1, 
+            type: 'stack', direction: 'column', gap: 2, flex: 1, 
             children: [
-              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
+              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold, minimumScaleFactor: 0.7 },
               {
-                // ✨ 修复点：将 alignItems 从 'center' 改为了 'start'
-                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 4],
+                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 0],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 } 
+                  // 增加 maxLines 到 3，并加入 minimumScaleFactor
+                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 } 
                 ]
               },
               {
-                // ✨ 修复点：将 alignItems 从 'center' 改为了 'start'
-                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 4],
+                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 0],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
+                  // 增加 maxLines 到 3，并加入 minimumScaleFactor
+                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
                 ]
               },
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, padding: [0, 4],
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, padding: [0, 0],
                 children: [
                   { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 11, height: 11 },
-                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.muted },
+                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.muted, minimumScaleFactor: 0.8 },
                   { type: 'spacer' }
                 ]
               }
@@ -212,17 +214,17 @@ export default async function(ctx) {
         type: 'stack', direction: 'column', gap: 2, padding: [5, 8], backgroundColor: C.bubbleBg, borderRadius: 8,
         children: [
           {
-            type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+            type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 11, height: 11 },
-              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
             ]
           },
           {
-            type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+            type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 11, height: 11 },
-              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
+              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
             ]
           }
         ]
