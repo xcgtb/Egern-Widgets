@@ -35,7 +35,8 @@ env_schema:
     default_value: "1"
 
 scriptings:
-  - name: 节点探针-Monitor
+- generic:
+    name: 节点探针-Monitor
     script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js
 
 widgets:
