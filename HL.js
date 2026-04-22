@@ -1,6 +1,6 @@
 /**
  * ==========================================
- * 📌 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘 - 小屏防溢出版)
+ * 📌 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘 - 100%防溢出终极版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -179,12 +179,12 @@ export default async function(ctx) {
 
 
   // ==========================================
-  // 🌟 UI 渲染区 (全域边距压缩 + 小屏防溢出终极版)
+  // 🌟 UI 渲染区 (全域防御：彻底解决局部截断问题)
   // ==========================================
   
   return {
     type: 'widget', 
-    padding: [10, 12], // ⏬ 全局左右边距压缩至 12，释放横向空间
+    padding: [10, 12], 
     url: 'calshow://',
     backgroundColor: C.bg, 
     children: [
@@ -204,18 +204,18 @@ export default async function(ctx) {
       
       // 模块 2：中间核心双栏数据
       {
-        type: 'stack', direction: 'row', alignItems: 'center', gap: 8, // ⏬ 双栏中间的间距压缩至 8
+        type: 'stack', direction: 'row', alignItems: 'center', gap: 8, 
         children: [
-          // 左侧栏：高亮焦点卡片
+          // ⚠️ 左侧栏：高亮焦点卡片 (强制加入 minScale 和 maxLines，赋予弹性)
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 10], // ⏬ 左侧卡片左右内边距压缩至 10
+            backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 8], // 左右内边距微缩，留出计算空间
             children: [
-              { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday },
+              { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday, maxLines: 1, minScale: 0.5 },
               { type: 'spacer', length: 1 },
-              { type: 'text', text: `${D}`, font: { size: 32, weight: 'heavy', family: 'rounded' }, textColor: C.main },
+              { type: 'text', text: `${D}`, font: { size: 32, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1, minScale: 0.5 },
               { type: 'spacer', length: 1 },
-              { type: 'text', text: obj.cn, font: { size: 11, weight: 'bold' }, textColor: C.gold }
+              { type: 'text', text: obj.cn, font: { size: 11, weight: 'bold' }, textColor: C.gold, maxLines: 1, minScale: 0.5 }
             ]
           },
           // 右侧栏：精致标签化黄历详情
@@ -257,13 +257,12 @@ export default async function(ctx) {
 
       // 模块 3：底部事件胶囊区
       {
-        type: 'stack', direction: 'column', gap: 2, padding: [5, 8], backgroundColor: C.bubbleBg, borderRadius: 8, // ⏬ 胶囊左右内边距压缩至 8
+        type: 'stack', direction: 'column', gap: 2, padding: [5, 8], backgroundColor: C.bubbleBg, borderRadius: 8,
         children: [
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 10, height: 10 },
-              // ⏬ 突破缩放限制：minScale 下调至 0.5，防截断神器
               { type: 'text', text: upcomingTerms.join(" · "), font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
             ]
           },
@@ -271,7 +270,6 @@ export default async function(ctx) {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 10, height: 10 },
-              // ⏬ 突破缩放限制：minScale 下调至 0.5，防截断神器
               { type: 'text', text: finalHolidayText, font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
             ]
           }
