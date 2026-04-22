@@ -1,5 +1,5 @@
 /**
- * 代码名称: 📅 日历 / 老黄历 (极简比例优化版)
+ * 代码名称: 📅 日历 / 老黄历 (极简比例优化·防吞字版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -66,19 +66,19 @@ export default async function(ctx) {
     }
   };
 
+  const todayMs = new Date(Y, M-1, D).getTime();
   const allTerms = [];
   [-1, 0, 1].forEach(offset => {
     for(let i=1; i<=24; i++) allTerms.push({ name: Lunar.termNames[i-1], date: new Date(Y + offset, Math.floor((i-1)/2), Lunar.getTerm(Y + offset, i)) });
   });
 
-  const todayMs = new Date(Y, M-1, D).getTime();
   let currentTerm = "", upcomingTerms = [];
   for (let i = 0; i < allTerms.length; i++) {
     const diff = Math.round((allTerms[i].date.getTime() - todayMs) / 86400000);
     if (diff >= 0) {
       currentTerm = diff === 0 ? allTerms[i].name : allTerms[i-1].name;
       const startIdx = diff === 0 ? i + 1 : i;
-      upcomingTerms = allTerms.slice(startIdx, startIdx + 4).map(t => `${t.name} ${Math.round((t.date.getTime() - todayMs) / 86400000)}天`);
+      upcomingTerms = allTerms.slice(startIdx, startIdx + 3).map(t => `${t.name} ${Math.round((t.date.getTime() - todayMs) / 86400000)}天`);
       break;
     }
   }
@@ -151,7 +151,7 @@ export default async function(ctx) {
         foundHolidays.add(h.name);
       }
     }
-    if (upcomingHolidays.length >= 4) break; 
+    if (upcomingHolidays.length >= 3) break; 
   }
 
   let finalHolidayText = upcomingHolidays.join(" · ");
@@ -178,33 +178,35 @@ export default async function(ctx) {
           // 🌟 极简版左侧日期卡片
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: C.cardBg, borderRadius: 10, padding: [3, 5], // 缩减内边距
+            backgroundColor: C.cardBg, borderRadius: 10, padding: [3, 5], 
             children: [
-              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday, maxLines: 1 }, // 字号缩小
+              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday, maxLines: 1 }, 
               { type: 'spacer', length: 1 },
-              { type: 'text', text: `${D}`, font: { size: 22, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1 }, // 数字缩小
+              { type: 'text', text: `${D}`, font: { size: 22, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1 }, 
               { type: 'spacer', length: 1 },
-              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold, maxLines: 1 } // 字号缩小
+              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold, maxLines: 1 } 
             ]
           },
           {
-            type: 'stack', direction: 'column', gap: 4, flex: 1, 
+            type: 'stack', direction: 'column', gap: 3, flex: 1, 
             children: [
               { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
+              // 🌟 宜：改为 top 对齐，支持 2 行
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
+                type: 'stack', direction: 'row', alignItems: 'top', gap: 4, 
                 backgroundColor: C.yiBg, borderRadius: 6, padding: [2, 4],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 } 
+                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 } 
                 ]
               },
+              // 🌟 忌：改为 top 对齐，支持 2 行
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                type: 'stack', direction: 'row', alignItems: 'top', gap: 4,
                 backgroundColor: C.jiBg, borderRadius: 6, padding: [2, 4],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
+                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
                 ]
               },
               {
@@ -227,14 +229,16 @@ export default async function(ctx) {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 11, height: 11 },
-              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
+              // 🌟 底部文字也支持 2 行，防止吞字
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
             ]
           },
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 11, height: 11 },
-              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
+              // 🌟 底部文字也支持 2 行，防止吞字
+              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
             ]
           }
         ]
