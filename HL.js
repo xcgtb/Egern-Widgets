@@ -1,12 +1,10 @@
 /**
- * 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘 - 100%防溢出终极版)
+ * 代码名称: 📅 日历 / 老黄历 (胶囊背景隔离稳定版)
  * ==========================================
  */
 export default async function(ctx) {
-  // 🌟 新增：读取 YAML 中的环境变量
   const { MY_ZODIAC } = ctx.env || {};
 
-  // 🎨 统一 UI 规范颜色
   const C = {
     bg: { light: '#FFFFFF', dark: '#121212' },
     cardBg: { light: '#F2F2F7', dark: '#1C1C1E' },     
@@ -19,7 +17,10 @@ export default async function(ctx) {
     yi: { light: '#34C759', dark: '#30D158' },       
     ji: { light: '#FF3B30', dark: '#FF453A' },       
     term: { light: '#34C759', dark: '#30D158' },     
-    holiday: { light: '#007AFF', dark: '#0A84FF' },  
+    holiday: { light: '#007AFF', dark: '#0A84FF' },
+    // 🌟 新增：极淡的背景隔离色
+    yiBg: { light: '#34C75910', dark: '#30D15815' },
+    jiBg: { light: '#FF3B3010', dark: '#FF453A15' },
     transparent: '#00000000'
   };
 
@@ -57,13 +58,11 @@ export default async function(ctx) {
       }
       if(offset==0 && leap>0 && i==leap+1) if(isLeap) isLeap=false; else { isLeap=true; --i; }
       if(offset<0) { offset+=temp; i--; }
-      
       const lD = offset + 1, tId = m * 2 - (d < this.getTerm(y, m * 2 - 1) ? 2 : 1);
       const gz = "甲乙丙丁戊己庚辛壬癸"[(lYear-4)%10] + "子丑寅卯辰巳午未申酉戌亥"[(lYear-4)%12];
       const ani = "鼠牛虎兔龙蛇马羊猴鸡狗猪"[(lYear-4)%12];
       const cnMonth = `${isLeap?"闰":""}${["正","二","三","四","五","六","七","八","九","十","冬","腊"][i-1]}月`;
       const cnDay = lD==10?"初十":lD==20?"二十":lD==30?"三十":["初","十","廿","卅"][Math.floor(lD/10)] + ["日","一","二","三","四","五","六","七","八","九","十"][lD%10];
-      
       return { gz, ani, cn: `${cnMonth}${cnDay}`, term: (this.getTerm(y, tId+1) == d) ? this.termNames[tId] : "" };
     }
   };
@@ -93,7 +92,6 @@ export default async function(ctx) {
     const resp = await ctx.http.get(`https://raw.githubusercontent.com/zqzess/openApiData/main/calendar_new/${Y}/${Y}${P(M)}.json`, { timeout: 8000 });
     const json = JSON.parse(await resp.text());
     const patterns = [`${Y}-${P(M)}-${P(D)}`, `${Y}-${M}-${D}`, `${Y}/${P(M)}/${P(D)}`, `${Y}/${M}/${D}`, `${Y}${P(M)}${P(D)}`];
-    
     const findDateData = (data) => {
       if (!data || typeof data !== 'object') return null;
       for (const key in data) {
@@ -144,12 +142,10 @@ export default async function(ctx) {
 
   let upcomingHolidays = [];
   let foundHolidays = new Set();
-  
   for (let i = 1; i <= 365; i++) {
     let tempDate = new Date(todayMs + i * 86400000);
     let ty = tempDate.getFullYear(), tm = tempDate.getMonth() + 1, td = tempDate.getDate();
     let tl = Lunar.parse(ty, tm, td);
-    
     for (let h of targetHolidays) {
       if (!foundHolidays.has(h.name) && h.match(tm, td, tl, tl)) {
         upcomingHolidays.push(`${h.name} ${i}天`);
@@ -160,22 +156,11 @@ export default async function(ctx) {
   }
 
   let finalHolidayText = upcomingHolidays.join(" · ");
-  if (todayHoliday) {
-      finalHolidayText = `今日${todayHoliday} | 距 ${finalHolidayText}`;
-  }
+  if (todayHoliday) finalHolidayText = `今日${todayHoliday} | 距 ${finalHolidayText}`;
 
-
-  // ==========================================
-  // 🌟 UI 渲染区
-  // ==========================================
-  
   return {
-    type: 'widget', 
-    padding: [10, 12], 
-    url: 'calshow://',
-    backgroundColor: C.bg, 
+    type: 'widget', padding: [10, 12], url: 'calshow://', backgroundColor: C.bg, 
     children: [
-      // 模块 1：顶部状态栏 
       { 
         type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
         children: [
@@ -188,47 +173,44 @@ export default async function(ctx) {
         ]
       },
       { type: 'spacer', length: 6 }, 
-      
-      // 模块 2：中间核心双栏数据
       {
         type: 'stack', direction: 'row', alignItems: 'center', gap: 8, 
         children: [
-          // 左侧栏：高亮焦点卡片
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
             backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 8],
             children: [
-              { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday, maxLines: 1, minScale: 0.5 },
+              { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday, maxLines: 1 },
               { type: 'spacer', length: 1 },
-              { type: 'text', text: `${D}`, font: { size: 32, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1, minScale: 0.5 },
+              { type: 'text', text: `${D}`, font: { size: 32, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1 },
               { type: 'spacer', length: 1 },
-              { type: 'text', text: obj.cn, font: { size: 11, weight: 'bold' }, textColor: C.gold, maxLines: 1, minScale: 0.5 }
+              { type: 'text', text: obj.cn, font: { size: 11, weight: 'bold' }, textColor: C.gold, maxLines: 1 }
             ]
           },
-          // 右侧栏：精致标签化黄历详情
           {
-            type: 'stack', direction: 'column', gap: 5, flex: 1, 
+            type: 'stack', direction: 'column', gap: 4, flex: 1, 
             children: [
-              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `· 今日${obj.term}` : `· 当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
-              // 宜 
+              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
+              // 🌟 宜：增加独立胶囊背景和Padding
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
+                backgroundColor: C.yiBg, borderRadius: 6, padding: [2, 4],
                 children: [
-                  { type: 'stack', padding: [1, 4], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 10, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 } 
                 ]
               },
-              // 忌 
+              // 🌟 忌：增加独立胶囊背景和Padding
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: C.jiBg, borderRadius: 6, padding: [2, 4],
                 children: [
-                  { type: 'stack', padding: [1, 4], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 10, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
                 ]
               },
-              // 冲煞 
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, padding: [0, 4],
                 children: [
                   { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 11, height: 11 },
                   { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.muted },
@@ -240,27 +222,21 @@ export default async function(ctx) {
         ]
       },
       { type: 'spacer', length: 6 }, 
-
-      // 模块 3：底部事件胶囊区
       {
         type: 'stack', direction: 'column', gap: 2, padding: [5, 8], backgroundColor: C.bubbleBg, borderRadius: 8,
         children: [
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
-              // 🌟 图标调至 11
               { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 11, height: 11 },
-              // 🌟 文字调至 11
-              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
             ]
           },
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
-              // 🌟 图标调至 11
               { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 11, height: 11 },
-              // 🌟 文字调至 11
-              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
+              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
             ]
           }
         ]
