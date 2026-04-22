@@ -1,17 +1,17 @@
 /**
  * ==========================================
- * 📌 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘中号优化版)
+ * 📌 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘 - 小屏防溢出版)
  * ==========================================
  */
 export default async function(ctx) {
   // 🌟 新增：读取 YAML 中的环境变量
   const { MY_ZODIAC } = ctx.env || {};
 
-  // 🎨 统一 UI 规范颜色 (新增了卡片和气泡底色)
+  // 🎨 统一 UI 规范颜色
   const C = {
     bg: { light: '#FFFFFF', dark: '#121212' },
-    cardBg: { light: '#F2F2F7', dark: '#1C1C1E' },     // 左侧大日历卡片底色
-    bubbleBg: { light: '#8E8E9315', dark: '#FFFFFF15' }, // 底部胶囊底色
+    cardBg: { light: '#F2F2F7', dark: '#1C1C1E' },     
+    bubbleBg: { light: '#8E8E9315', dark: '#FFFFFF15' }, 
     main: { light: '#1C1C1E', dark: '#FFFFFF' },
     sub: { light: '#48484A', dark: '#D1D1D6' },
     muted: { light: '#8E8E93', dark: '#8E8E93' },
@@ -29,7 +29,6 @@ export default async function(ctx) {
   const WEEK = "日一二三四五六"[now.getDay()];
   const P = n => n < 10 ? `0${n}` : n;
 
-  // 🌟 新增：星座自动计算函数 (用于环境变量为空时)
   const getZodiac = (m, d) => {
     const s = ["摩羯座","水瓶座","双鱼座","白羊座","金牛座","双子座","巨蟹座","狮子座","处女座","天秤座","天蝎座","射手座","摩羯座"];
     const l = [20,19,21,20,21,22,23,23,23,24,23,22];
@@ -38,7 +37,6 @@ export default async function(ctx) {
   const currentZodiacDisplay = MY_ZODIAC || getZodiac(M, D);
 
   const Lunar = {
-    // ✅ 修复：补全了漏掉的 0x 前缀，解决脚本不显示的问题
     info: [0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,0x0d520],
     termNames: ["小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种","夏至","小暑","大暑","立秋","处暑","白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至"],
     getTerm(y, n) { return new Date((31556925974.7*(y-1900)+[0,21208,42467,63836,85337,107014,128867,150921,173149,195551,218072,240693,263343,285989,308563,331033,353350,375494,397447,419210,440795,462224,483532,504758][n-1]*60000)+Date.UTC(1900,0,6,2,5)).getUTCDate() },
@@ -181,72 +179,72 @@ export default async function(ctx) {
 
 
   // ==========================================
-  // 🌟 UI 渲染区 (全新左右分栏 Dashboard 适配中号优化版)
+  // 🌟 UI 渲染区 (全域边距压缩 + 小屏防溢出终极版)
   // ==========================================
   
   return {
     type: 'widget', 
-    padding: [10, 14], // ⏬ 整体外边距缩小，防止顶到边缘
+    padding: [10, 12], // ⏬ 全局左右边距压缩至 12，释放横向空间
     url: 'calshow://',
     backgroundColor: C.bg, 
     children: [
-      // 模块 1：顶部状态栏
+      // 模块 1：顶部状态栏 
       { 
         type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
         children: [
           { type: 'image', src: 'sf-symbol:calendar.circle.fill', color: C.main, width: 14, height: 14 }, 
-          { type: 'text', text: `${Y}年${M}月${D}日`, font: { size: 12, weight: 'heavy' }, textColor: C.main },
+          { type: 'text', text: `${Y}年${M}月${D}日`, font: { size: 13, weight: 'heavy' }, textColor: C.main },
           { type: 'spacer' },
-          { type: 'text', text: currentZodiacDisplay, font: { size: 10, weight: 'bold' }, textColor: C.muted },
-          { type: 'text', text: '|', font: { size: 10, weight: 'medium' }, textColor: C.divider },
-          { type: 'text', text: shichenStr, font: { size: 10, weight: 'bold' }, textColor: C.muted }
+          { type: 'text', text: currentZodiacDisplay, font: { size: 11, weight: 'bold' }, textColor: C.muted },
+          { type: 'text', text: '|', font: { size: 11, weight: 'medium' }, textColor: C.divider },
+          { type: 'text', text: shichenStr, font: { size: 11, weight: 'bold' }, textColor: C.muted }
         ]
       },
-      { type: 'spacer', length: 8 }, // ⏬ 模块间距收紧
+      { type: 'spacer', length: 6 }, 
       
       // 模块 2：中间核心双栏数据
       {
-        type: 'stack', direction: 'row', alignItems: 'center', gap: 10, // ⏬ 左右分栏间隙收紧
+        type: 'stack', direction: 'row', alignItems: 'center', gap: 8, // ⏬ 双栏中间的间距压缩至 8
         children: [
-          // 左侧栏：高亮焦点卡片 (缩小内边距与大数字)
+          // 左侧栏：高亮焦点卡片
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: C.cardBg, borderRadius: 12, padding: [8, 12],
+            backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 10], // ⏬ 左侧卡片左右内边距压缩至 10
             children: [
-              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday },
+              { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday },
               { type: 'spacer', length: 1 },
-              { type: 'text', text: `${D}`, font: { size: 30, weight: 'heavy', family: 'rounded' }, textColor: C.main },
+              { type: 'text', text: `${D}`, font: { size: 32, weight: 'heavy', family: 'rounded' }, textColor: C.main },
               { type: 'spacer', length: 1 },
-              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold }
+              { type: 'text', text: obj.cn, font: { size: 11, weight: 'bold' }, textColor: C.gold }
             ]
           },
-          // 右侧栏：精致标签化黄历详情 (压缩行距)
+          // 右侧栏：精致标签化黄历详情
           {
-            type: 'stack', direction: 'column', gap: 4, flex: 1, 
+            type: 'stack', direction: 'column', gap: 3, flex: 1, 
             children: [
-              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `· 今日${obj.term}` : `· 当前${currentTerm}`}`, font: { size: 10, weight: 'bold' }, textColor: C.gold },
-              // 宜
+              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `· 今日${obj.term}` : `· 当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
+              // 宜 
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
-                  { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 } // 加入 minScale 防止文字太长折行
+                  { type: 'stack', padding: [1, 4], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 10, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 } 
                 ]
               },
-              // 忌
+              // 忌 
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
-                  { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+                  { type: 'stack', padding: [1, 4], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 10, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
                 ]
               },
-              // 冲煞 & 运势
+              // 冲煞 & 运势 
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
-                  { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 9, height: 9 },
-                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 9, weight: 'medium' }, textColor: C.muted },
+                  { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 10, height: 10 },
+                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 10, weight: 'medium' }, textColor: C.muted },
                   { type: 'spacer' },
                   { type: 'text', text: starStr, font: { size: 9 }, textColor: C.gold }
                 ]
@@ -255,24 +253,26 @@ export default async function(ctx) {
           }
         ]
       },
-      { type: 'spacer', length: 8 },
+      { type: 'spacer', length: 6 }, 
 
-      // 模块 3：底部事件胶囊区 (压实高度)
+      // 模块 3：底部事件胶囊区
       {
-        type: 'stack', direction: 'column', gap: 3, padding: [6, 10], backgroundColor: C.bubbleBg, borderRadius: 8,
+        type: 'stack', direction: 'column', gap: 2, padding: [5, 8], backgroundColor: C.bubbleBg, borderRadius: 8, // ⏬ 胶囊左右内边距压缩至 8
         children: [
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
-              { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 9, height: 9 },
-              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 9, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+              { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 10, height: 10 },
+              // ⏬ 突破缩放限制：minScale 下调至 0.5，防截断神器
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
             ]
           },
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
-              { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 9, height: 9 },
-              { type: 'text', text: finalHolidayText, font: { size: 9, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+              { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 10, height: 10 },
+              // ⏬ 突破缩放限制：minScale 下调至 0.5，防截断神器
+              { type: 'text', text: finalHolidayText, font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
             ]
           }
         ]
