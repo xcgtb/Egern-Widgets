@@ -1,15 +1,17 @@
 /**
  * ==========================================
- * 📌 代码名称: 📅 日历 / 老黄历 (修复版 - 严禁改动原版逻辑)
+ * 📌 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘中号优化版)
  * ==========================================
  */
 export default async function(ctx) {
   // 🌟 新增：读取 YAML 中的环境变量
   const { MY_ZODIAC } = ctx.env || {};
 
-  // 🎨 统一 UI 规范颜色
+  // 🎨 统一 UI 规范颜色 (新增了卡片和气泡底色)
   const C = {
     bg: { light: '#FFFFFF', dark: '#121212' },
+    cardBg: { light: '#F2F2F7', dark: '#1C1C1E' },     // 左侧大日历卡片底色
+    bubbleBg: { light: '#8E8E9315', dark: '#FFFFFF15' }, // 底部胶囊底色
     main: { light: '#1C1C1E', dark: '#FFFFFF' },
     sub: { light: '#48484A', dark: '#D1D1D6' },
     muted: { light: '#8E8E93', dark: '#8E8E93' },
@@ -133,7 +135,7 @@ export default async function(ctx) {
       let sc = 4;
       if (rawYi.includes("诸事不宜") || rawJi.includes("诸事不宜")) sc = 2;
       else if (rawJi.length > rawYi.length) sc = 3;
-      else if (rawYi.length > rawJi.length + 8) sc = 5; // ✅ 修复：此处原版逻辑有误，已修正
+      else if (rawYi.length > rawJi.length + 8) sc = 5; 
       starStr = "⭐".repeat(sc);
   } else if (!isNaN(scStr)) {
       starStr = "⭐".repeat(Math.min(5, Math.max(1, parseInt(scStr))));
@@ -172,69 +174,109 @@ export default async function(ctx) {
     if (upcomingHolidays.length >= 4) break; 
   }
 
-  let finalHolidayText = upcomingHolidays.join(", ");
+  let finalHolidayText = upcomingHolidays.join(" · ");
   if (todayHoliday) {
-      finalHolidayText = `今日${todayHoliday} · 距 ${finalHolidayText}`;
+      finalHolidayText = `今日${todayHoliday} | 距 ${finalHolidayText}`;
   }
 
-  const createRow = (icon, color, label, textStr) => ({
-      type: 'stack', direction: 'row', alignItems: 'center', gap: 4, children: [
-          { type: 'stack', direction: 'row', alignItems: 'center', gap: 2, children: [
-              { type: 'image', src: `sf-symbol:${icon}`, color: color, width: 13, height: 13 },
-              { type: 'text', text: label, font: { size: 12, weight: 'heavy' }, textColor: color }
-          ]},
-          { type: 'text', text: textStr, font: { size: 12, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
-      ]
-  });
 
-  let gridRows = [];
-  if (rawYi) gridRows.push(createRow("checkmark.circle.fill", C.yi, "宜", rawYi));
-  if (rawJi) gridRows.push(createRow("xmark.circle.fill", C.ji, "忌", rawJi));
-
+  // ==========================================
+  // 🌟 UI 渲染区 (全新左右分栏 Dashboard 适配中号优化版)
+  // ==========================================
+  
   return {
     type: 'widget', 
-    padding: [14, 16], 
+    padding: [10, 14], // ⏬ 整体外边距缩小，防止顶到边缘
     url: 'calshow://',
     backgroundColor: C.bg, 
     children: [
-      { type: 'stack', direction: 'row', alignItems: 'center', gap: 6, children: [
-          { type: 'image', src: 'sf-symbol:calendar', color: C.main, width: 16, height: 16 }, 
-          { type: 'text', text: `${Y}年${M}月${D}日 星期${WEEK}`, font: { size: 15, weight: 'heavy' }, textColor: C.main },
+      // 模块 1：顶部状态栏
+      { 
+        type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
+        children: [
+          { type: 'image', src: 'sf-symbol:calendar.circle.fill', color: C.main, width: 14, height: 14 }, 
+          { type: 'text', text: `${Y}年${M}月${D}日`, font: { size: 12, weight: 'heavy' }, textColor: C.main },
           { type: 'spacer' },
-          { type: 'stack', direction: 'row', alignItems: 'center', gap: 3, children: [
-              { type: 'image', src: 'sf-symbol:sparkles', color: C.gold, width: 12, height: 12 },
-              // ✅ 此处已替换为环境变量/计算后的变量
-              { type: 'text', text: currentZodiacDisplay, font: { size: 12, weight: 'medium' }, textColor: C.muted }
-          ]}
-      ]},
-      { type: 'spacer', length: 6 }, 
-      { type: 'stack', direction: 'column', alignItems: 'start', gap: 6, children: [
-          { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.cn} ${shichenStr}${obj.term ? ` · 今日${obj.term}` : ` · 当前${currentTerm}`}`, font: { size: 13, weight: 'bold' }, textColor: C.gold },
-          ...gridRows,
-          { type: 'stack', direction: 'row', alignItems: 'center', gap: 6, children: [
-              { type: 'stack', direction: 'row', alignItems: 'center', gap: 3, children: [
-                  { type: 'image', src: 'sf-symbol:shield.lefthalf.filled', color: C.gold, width: 12, height: 12 },
-                  { type: 'text', text: "冲煞:", font: { size: 12, weight: 'bold' }, textColor: C.muted },
-                  { type: 'text', text: chongshaInfo, font: { size: 12, weight: 'medium' }, textColor: C.muted }
-              ]},
-              { type: 'text', text: '|', font: { size: 11, weight: 'medium' }, textColor: C.divider },
-              { type: 'stack', direction: 'row', alignItems: 'center', gap: 3, children: [
-                  { type: 'text', text: "运势:", font: { size: 12, weight: 'bold' }, textColor: C.muted },
-                  { type: 'text', text: starStr, font: { size: 12, weight: 'medium' }, textColor: C.muted }
-              ]}
-          ]},
-          { type: 'stack', direction: 'row', alignItems: 'center', gap: 4, children: [
-              { type: 'image', src: 'sf-symbol:leaf.arrow.circlepath', color: C.term, width: 13, height: 13 }, 
-              { type: 'text', text: "节气:", font: { size: 12, weight: 'bold' }, textColor: C.term }, 
-              { type: 'text', text: upcomingTerms.join(", "), font: { size: 12, weight: 'medium' }, textColor: C.term, maxLines: 1, flex: 1 }
-          ]},
-          { type: 'stack', direction: 'row', alignItems: 'center', gap: 4, children: [
-              { type: 'image', src: 'sf-symbol:flag.fill', color: C.holiday, width: 13, height: 13 },
-              { type: 'text', text: "法定:", font: { size: 12, weight: 'bold' }, textColor: C.holiday }, 
-              { type: 'text', text: finalHolidayText, font: { size: 12, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
-          ]}
-      ]},
-      { type: 'spacer' }
+          { type: 'text', text: currentZodiacDisplay, font: { size: 10, weight: 'bold' }, textColor: C.muted },
+          { type: 'text', text: '|', font: { size: 10, weight: 'medium' }, textColor: C.divider },
+          { type: 'text', text: shichenStr, font: { size: 10, weight: 'bold' }, textColor: C.muted }
+        ]
+      },
+      { type: 'spacer', length: 8 }, // ⏬ 模块间距收紧
+      
+      // 模块 2：中间核心双栏数据
+      {
+        type: 'stack', direction: 'row', alignItems: 'center', gap: 10, // ⏬ 左右分栏间隙收紧
+        children: [
+          // 左侧栏：高亮焦点卡片 (缩小内边距与大数字)
+          {
+            type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: C.cardBg, borderRadius: 12, padding: [8, 12],
+            children: [
+              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday },
+              { type: 'spacer', length: 1 },
+              { type: 'text', text: `${D}`, font: { size: 30, weight: 'heavy', family: 'rounded' }, textColor: C.main },
+              { type: 'spacer', length: 1 },
+              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold }
+            ]
+          },
+          // 右侧栏：精致标签化黄历详情 (压缩行距)
+          {
+            type: 'stack', direction: 'column', gap: 4, flex: 1, 
+            children: [
+              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `· 今日${obj.term}` : `· 当前${currentTerm}`}`, font: { size: 10, weight: 'bold' }, textColor: C.gold },
+              // 宜
+              {
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                children: [
+                  { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 } // 加入 minScale 防止文字太长折行
+                ]
+              },
+              // 忌
+              {
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                children: [
+                  { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+                ]
+              },
+              // 冲煞 & 运势
+              {
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+                children: [
+                  { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 9, height: 9 },
+                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 9, weight: 'medium' }, textColor: C.muted },
+                  { type: 'spacer' },
+                  { type: 'text', text: starStr, font: { size: 9 }, textColor: C.gold }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      { type: 'spacer', length: 8 },
+
+      // 模块 3：底部事件胶囊区 (压实高度)
+      {
+        type: 'stack', direction: 'column', gap: 3, padding: [6, 10], backgroundColor: C.bubbleBg, borderRadius: 8,
+        children: [
+          {
+            type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+            children: [
+              { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 9, height: 9 },
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 9, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+            ]
+          },
+          {
+            type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
+            children: [
+              { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 9, height: 9 },
+              { type: 'text', text: finalHolidayText, font: { size: 9, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+            ]
+          }
+        ]
+      }
     ]
   };
 }
