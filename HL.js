@@ -1,5 +1,5 @@
 /**
- * 代码名称: 📅 日历 / 老黄历 (胶囊背景隔离稳定版)
+ * 代码名称: 📅 日历 / 老黄历 (极简比例优化版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -18,7 +18,6 @@ export default async function(ctx) {
     ji: { light: '#FF3B30', dark: '#FF453A' },       
     term: { light: '#34C759', dark: '#30D158' },     
     holiday: { light: '#007AFF', dark: '#0A84FF' },
-    // 🌟 新增：极淡的背景隔离色
     yiBg: { light: '#34C75910', dark: '#30D15815' },
     jiBg: { light: '#FF3B3010', dark: '#FF453A15' },
     transparent: '#00000000'
@@ -174,24 +173,24 @@ export default async function(ctx) {
       },
       { type: 'spacer', length: 6 }, 
       {
-        type: 'stack', direction: 'row', alignItems: 'center', gap: 8, 
+        type: 'stack', direction: 'row', alignItems: 'center', gap: 10, 
         children: [
+          // 🌟 极简版左侧日期卡片
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 8],
+            backgroundColor: C.cardBg, borderRadius: 10, padding: [3, 5], // 缩减内边距
             children: [
-              { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday, maxLines: 1 },
+              { type: 'text', text: `周${WEEK}`, font: { size: 10, weight: 'bold' }, textColor: C.holiday, maxLines: 1 }, // 字号缩小
               { type: 'spacer', length: 1 },
-              { type: 'text', text: `${D}`, font: { size: 32, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1 },
+              { type: 'text', text: `${D}`, font: { size: 22, weight: 'heavy', family: 'rounded' }, textColor: C.main, maxLines: 1 }, // 数字缩小
               { type: 'spacer', length: 1 },
-              { type: 'text', text: obj.cn, font: { size: 11, weight: 'bold' }, textColor: C.gold, maxLines: 1 }
+              { type: 'text', text: obj.cn, font: { size: 10, weight: 'bold' }, textColor: C.gold, maxLines: 1 } // 字号缩小
             ]
           },
           {
             type: 'stack', direction: 'column', gap: 4, flex: 1, 
             children: [
               { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
-              // 🌟 宜：增加独立胶囊背景和Padding
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
                 backgroundColor: C.yiBg, borderRadius: 6, padding: [2, 4],
@@ -200,7 +199,6 @@ export default async function(ctx) {
                   { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 } 
                 ]
               },
-              // 🌟 忌：增加独立胶囊背景和Padding
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 backgroundColor: C.jiBg, borderRadius: 6, padding: [2, 4],
