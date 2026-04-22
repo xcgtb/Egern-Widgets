@@ -1,4 +1,4 @@
-name: "节点探针-Monitor"
+name: "Server Monitor 探针"
 description: "服务器状态监控仪表盘配置面板"
 
 env_schema:
@@ -36,9 +36,9 @@ env_schema:
 
 scriptings:
 - generic:
-    name: 节点探针-Monitor
+    name: Server Monitor 探针
     script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js
 
 widgets:
-  - name: 节点探针-Monitor
-    script_name: 节点探针-Monitor
+  - name: Server Monitor 探针
+    script_name: Server Monitor 探针
