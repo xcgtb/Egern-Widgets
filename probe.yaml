@@ -1,4 +1,9 @@
-# 服务器探针配置 (Server Monitor)
+name: "Server Monitor 探针"  # 建议补充模块名称
+description: "服务器状态监控仪表盘配置面板" # 建议补充模块描述
+
+# --- 环境变量配置区 ---
+# 🛠️ 必须包含在 arguments 下
+arguments:
   WIDGET_NAME:
     name: 节点名称
     description: 探针显示的节点名称
@@ -40,14 +45,14 @@
     description: 每月几号重置流量
     default_value: "1"
 
+# --- 脚本声明区 ---
+# 🛠️ 修正了层级，去掉了错误的 generic 嵌套
 scriptings:    
- - generic:
-      name: 节点探针-Monitor
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js?v=339    
+  - name: 节点探针-Monitor
+    script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js?v=339    
   
 # --- 面板展示区 ---
+# 这一块没问题，保持原样
 widgets:
   - name: 节点探针-Monitor
     script_name: 节点探针-Monitor
-    
-  
