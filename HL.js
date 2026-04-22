@@ -180,14 +180,16 @@ export default async function(ctx) {
             children: [
               { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, padding: [2, 4],
+                // ✨ 修复点：将 alignItems 从 'center' 改为了 'start'
+                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 4],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 } 
                 ]
               },
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, padding: [2, 4],
+                // ✨ 修复点：将 alignItems 从 'center' 改为了 'start'
+                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 4],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
