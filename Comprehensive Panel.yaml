@@ -77,7 +77,7 @@ scriptings:
       
   - generic:
       name: 节点探针-Monitor
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js
+      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js?v=339
       
   - generic:
       name: 加密货币-Crypto
