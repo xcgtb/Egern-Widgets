@@ -2,7 +2,6 @@ name: "Server Monitor 探针"
 description: "服务器状态监控仪表盘配置面板"
 
 # --- 环境变量配置区 ---
-# 🛠️ Egern 专属规范，必须使用 env_schema
 env_schema:
   WIDGET_NAME:
     name: 节点名称
