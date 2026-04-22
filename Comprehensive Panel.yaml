@@ -65,7 +65,7 @@ env_schema:
 scriptings:
   - generic:
       name: 黄历信息-HL
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/HL.js?v=331
+      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/HL.js
       
   - generic:
       name: 今日油价-Youjia
@@ -77,11 +77,11 @@ scriptings:
       
   - generic:
       name: 节点探针-Monitor
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js?v=339
+      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js
       
   - generic:
       name: 加密货币-Crypto
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Crypto.js?v=123
+      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Crypto.js
 
 # --- 面板展示区 ---
 widgets:
