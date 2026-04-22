@@ -1,15 +1,9 @@
-name: "综合面板小组件合集"
+Name: "综合面板小组件合集"
 description: "包含黄历、油价、网络信息、服务器监控与加密货币的组件合集"
 
-# --- 环境变量配置区 (已集成：黄历星座、油价地区、探针参数) ---
+# --- 环境变量配置区 (已集成：油价地区、探针参数) ---
 env_schema:
-  # 1. 黄历/日历配置
-  MY_ZODIAC:
-    name: 我的星座
-    description: "选填，例如：狮子座。不填则根据当前日期自动计算。"
-    default_value: ""
-    
-  # 2. 今日油价配置
+  # 1. 今日油价配置
   GAS_REGION:
     name: 油价地区代码
     description: "请前往 m.qiyoujiage.com 查看，例如：guangdong/guangzhou"
@@ -19,7 +13,7 @@ env_schema:
     description: "是否显示本轮调价趋势，填写 true 或 false"
     default_value: "true"
 
-  # 3. 服务器探针配置 (Server Monitor)
+  # 2. 服务器探针配置 (Server Monitor)
   WIDGET_NAME:
     name: 节点名称
     description: 探针显示的节点名称
