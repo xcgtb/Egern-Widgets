@@ -1,4 +1,4 @@
-Name: "Server Monitor 探针"
+name: "Server Monitor 探针"
 description: "服务器状态监控仪表盘配置面板"
 
 env_schema:
