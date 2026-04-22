@@ -1,5 +1,5 @@
 /*
- * 名称: 📅 日历 / 老黄历 (大字体自适应防错位版)
+ * 名称: 📅 日历 / 老黄历 (大字体自适应 + 完美对齐防挤压版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -155,7 +155,6 @@ export default async function(ctx) {
         type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
         children: [
           { type: 'image', src: 'sf-symbol:calendar.circle.fill', color: C.main, width: 14, height: 14 }, 
-          // 顶部栏文本加入缩放保护
           { type: 'text', text: `${Y}年${M}月${D}日`, font: { size: 13, weight: 'heavy' }, textColor: C.main, minimumScaleFactor: 0.8 },
           { type: 'spacer' },
           { type: 'text', text: shichenStr, font: { size: 11, weight: 'bold' }, textColor: C.muted, minimumScaleFactor: 0.8 }
@@ -163,7 +162,6 @@ export default async function(ctx) {
       },
       { type: 'spacer', length: 6 }, 
       {
-        // 左右两块的主容器，gap稍微调小，防挤压
         type: 'stack', direction: 'row', alignItems: 'center', gap: 8, 
         children: [
           {
@@ -178,30 +176,32 @@ export default async function(ctx) {
             ]
           },
           {
-            type: 'stack', direction: 'column', gap: 2, flex: 1, 
+            // ✨ 修复点1：给列元素增加一点呼吸空间（gap: 3），防止内部上下行太紧绷
+            type: 'stack', direction: 'column', gap: 3, flex: 1, 
             children: [
               { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold, minimumScaleFactor: 0.7 },
               {
-                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 0],
+                type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
                 children: [
-                  { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  // 增加 maxLines 到 3，并加入 minimumScaleFactor
+                  // ✨ 修复点2：仅固定 width: 16，不写死高度！让它们自然撑开
+                  { type: 'stack', width: 16, alignItems: 'center', backgroundColor: C.yi, borderRadius: 4, padding: [1, 0], children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 } 
                 ]
               },
               {
-                type: 'stack', direction: 'row', alignItems: 'start', gap: 4, padding: [2, 0],
+                type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
                 children: [
-                  { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  // 增加 maxLines 到 3，并加入 minimumScaleFactor
+                  // ✨ 修复点2：仅固定 width: 16，不写死高度！
+                  { type: 'stack', width: 16, alignItems: 'center', backgroundColor: C.ji, borderRadius: 4, padding: [1, 0], children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
                 ]
               },
               {
-                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, padding: [0, 0],
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
-                  { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 11, height: 11 },
-                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.muted, minimumScaleFactor: 0.8 },
+                  // ✨ 修复点3：给火焰也统一固定为 width: 16 并居中，同样不写死高度。完全解决对齐+变扁问题！
+                  { type: 'stack', width: 16, alignItems: 'center', children: [{ type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 11, height: 11 }] },
+                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.sub, minimumScaleFactor: 0.7 },
                   { type: 'spacer' }
                 ]
               }
