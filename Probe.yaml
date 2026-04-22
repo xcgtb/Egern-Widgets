@@ -1,5 +1,5 @@
 
-name: "Server Monitor 探针"
+name: "节点探针-Monitor"
 description: "服务器状态监控仪表盘配置面板"
 
 # --- 环境变量配置区 ---
