@@ -1,6 +1,5 @@
 /**
- * ==========================================
- * 📌 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘 - 100%防溢出终极版)
+ * 代码名称: 📅 日历 / 老黄历 (Modern 仪表盘 - 100%防溢出终极版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -127,18 +126,6 @@ export default async function(ctx) {
       chongshaInfo = `冲${"鼠牛虎兔龙蛇马羊猴鸡狗猪"[(dZhi+6)%12]}(${"甲乙丙丁戊己庚辛壬癸"[cIndex%10]}${"子丑寅卯辰巳午未申酉戌亥"[cIndex%12]})煞${["南","东","北","西"][dZhi%4]}`;
   }
 
-  let starStr = "⭐⭐⭐⭐";
-  const scStr = getVal("score", "Score", "pingfen", "star");
-  if (!scStr || scStr === "暂无") {
-      let sc = 4;
-      if (rawYi.includes("诸事不宜") || rawJi.includes("诸事不宜")) sc = 2;
-      else if (rawJi.length > rawYi.length) sc = 3;
-      else if (rawYi.length > rawJi.length + 8) sc = 5; 
-      starStr = "⭐".repeat(sc);
-  } else if (!isNaN(scStr)) {
-      starStr = "⭐".repeat(Math.min(5, Math.max(1, parseInt(scStr))));
-  }
-
   let todayHoliday = getVal("holiday", "festival", "jiejiari");
   if (!todayHoliday && apiData.type && apiData.type.name) {
       const tName = apiData.type.name;
@@ -179,7 +166,7 @@ export default async function(ctx) {
 
 
   // ==========================================
-  // 🌟 UI 渲染区 (全域防御：彻底解决局部截断问题)
+  // 🌟 UI 渲染区
   // ==========================================
   
   return {
@@ -206,10 +193,10 @@ export default async function(ctx) {
       {
         type: 'stack', direction: 'row', alignItems: 'center', gap: 8, 
         children: [
-          // ⚠️ 左侧栏：高亮焦点卡片 (强制加入 minScale 和 maxLines，赋予弹性)
+          // 左侧栏：高亮焦点卡片
           {
             type: 'stack', direction: 'column', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 8], // 左右内边距微缩，留出计算空间
+            backgroundColor: C.cardBg, borderRadius: 12, padding: [6, 8],
             children: [
               { type: 'text', text: `周${WEEK}`, font: { size: 11, weight: 'bold' }, textColor: C.holiday, maxLines: 1, minScale: 0.5 },
               { type: 'spacer', length: 1 },
@@ -220,7 +207,7 @@ export default async function(ctx) {
           },
           // 右侧栏：精致标签化黄历详情
           {
-            type: 'stack', direction: 'column', gap: 3, flex: 1, 
+            type: 'stack', direction: 'column', gap: 5, flex: 1, 
             children: [
               { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `· 今日${obj.term}` : `· 当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
               // 宜 
@@ -228,7 +215,7 @@ export default async function(ctx) {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
                   { type: 'stack', padding: [1, 4], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 10, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 } 
+                  { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 } 
                 ]
               },
               // 忌 
@@ -236,17 +223,16 @@ export default async function(ctx) {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
                   { type: 'stack', padding: [1, 4], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 10, weight: 'heavy' }, textColor: '#FFFFFF' }] },
-                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.8 }
+                  { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1 }
                 ]
               },
-              // 冲煞 & 运势 
+              // 冲煞 
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
-                  { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 10, height: 10 },
-                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 10, weight: 'medium' }, textColor: C.muted },
-                  { type: 'spacer' },
-                  { type: 'text', text: starStr, font: { size: 9 }, textColor: C.gold }
+                  { type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 11, height: 11 },
+                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.muted },
+                  { type: 'spacer' }
                 ]
               }
             ]
@@ -262,15 +248,19 @@ export default async function(ctx) {
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
-              { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 10, height: 10 },
-              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
+              // 🌟 图标调至 11
+              { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 11, height: 11 },
+              // 🌟 文字调至 11
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
             ]
           },
           {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
-              { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 10, height: 10 },
-              { type: 'text', text: finalHolidayText, font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
+              // 🌟 图标调至 11
+              { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 11, height: 11 },
+              // 🌟 文字调至 11
+              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 1, flex: 1, minScale: 0.5 }
             ]
           }
         ]
