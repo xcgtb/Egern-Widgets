@@ -48,7 +48,7 @@ env_schema:
 # --- 脚本声明区 ---
 scriptings:    
   - name: 节点探针-Monitor
-    script_url: https://ghproxy.net/https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js?v=339    
+    script_url: https://ghproxy.net/https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Probe.js?    
   
 # --- 面板展示区 ---
 widgets:
