@@ -1,22 +1,42 @@
 /**
- * ==========================================
- * 📌 代码名称: 🖥️ Server Monitor Widget Pro (统一 UI 版 - 仪表盘进度条)
- * ==========================================
+ * ====================================================================
+ * 🖥️ Server Monitor Widget Pro (统一 UI 版 - 仪表盘进度条)
+ * ====================================================================
+ *
+ * 📌 环境配置说明 (ctx.env):
+ * ------------------------
+ * SERVER_HOST     : 服务器 IP 或 域名 (必填)
+ * SERVER_USER     : SSH 用户名 (默认: root)
+ * SERVER_PORT     : SSH 端口 (默认: 22)
+ * SERVER_PASSWORD : SSH 密码 (与 SERVER_KEY 二选一)
+ * SERVER_KEY      : SSH 私钥 (支持 OpenSSH/PEM 格式，自动修复换行符)
+ * WIDGET_NAME     : 小组件显示的名称 (可选，默认: My Node)
+ *
+ * 📊 流量统计配置 (二选一):
+ * ------------------------
+ * 方案 A (搬瓦工 API - 优先):
+ * BWH_VEID        : 搬瓦工 VEID
+ * BWH_API_KEY     : 搬瓦工 API KEY
+ *
+ * 方案 B (普通 VPS 自定义设置):
+ * TRAFFIC_LIMIT   : 每月流量上限，单位 GB (默认: 2000)
+ * RESET_DAY       : 每月流量重置日期 (默认: 1)
+ * ====================================================================
  */
 export default async function (ctx) {
   const env = ctx.env || {}; 
   
   const SERVER_CONFIG = {
-    widgetName: env.WIDGET_NAME || 'My Node',        
-    host: env.SERVER_HOST || '',                     
-    port: Number(env.SERVER_PORT) || 22,             
-    username: env.SERVER_USER || 'root',             
-    password: env.SERVER_PASSWORD || '',             
-    privateKey: env.SERVER_KEY || '',                
-    bwhVeid: env.BWH_VEID || '',                     
-    bwhApiKey: env.BWH_API_KEY || '',                
-    trafficLimitGB: Number(env.TRAFFIC_LIMIT) || 2000, 
-    resetDay: Number(env.RESET_DAY) || 1             
+    widgetName: env.WIDGET_NAME || 'My Node',
+    host: env.SERVER_HOST || '',
+    port: Number(env.SERVER_PORT) || 22,
+    username: env.SERVER_USER || 'root',
+    password: env.SERVER_PASSWORD || '',
+    privateKey: (env.SERVER_KEY || '').replace(/\\n/g, '\n'), 
+    bwhVeid: env.BWH_VEID || '',
+    bwhApiKey: env.BWH_API_KEY || '',
+    trafficLimitGB: Number(env.TRAFFIC_LIMIT) || 2000,
+    resetDay: Number(env.RESET_DAY) || 1
   };
 
   // 🎨 统一 UI 规范颜色
@@ -180,28 +200,25 @@ export default async function (ctx) {
     d = { error: String(e.message || e) };
   }
 
-  // 🛠️ 核心修改：分段式科技感进度条 (Segmented LED Bar)
   const bar = (pct, color, h = 6) => {
-    const segCount = 24; // 🌟 仪表盘格栅数量，分割成24个小块
+    const segCount = 24; 
     const activeCount = Math.round((Math.max(0, Math.min(100, pct)) / 100) * segCount);
     
     return {
       type: 'stack', 
       direction: 'row', 
       height: h, 
-      gap: 1.5, // 方块之间的间距
+      gap: 1.5, 
       children: Array.from({ length: segCount }).map((_, i) => {
         const isActive = i < activeCount;
-        
-        // 🌟 视觉魔法：已激活的格子实现从左到右的「渐变发光」效果 (透明度从 0.4 逐渐亮到 1.0)
         const op = isActive ? (0.4 + 0.6 * (i / Math.max(activeCount - 1, 1))) : 1;
         
         return {
           type: 'stack', 
           flex: 1, 
           height: h, 
-          borderRadius: 1, // 微微的圆角，避免边缘过于锋利
-          backgroundColor: isActive ? color : C.barBg, // 未激活时使用半透明底色
+          borderRadius: 1, 
+          backgroundColor: isActive ? color : C.barBg, 
           opacity: op
         };
       })
@@ -265,7 +282,7 @@ export default async function (ctx) {
               { type: 'spacer' },
               { type: 'text', text: i.v, font: { size: 10, weight: 'heavy', family: 'Menlo' }, textColor: i.c },
             ]},
-            bar(i.pt, i.c, 5), // 小组件进度条稍微细一点
+            bar(i.pt, i.c, 5),
           ]
         }))
       ],
