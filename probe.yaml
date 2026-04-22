@@ -1,5 +1,5 @@
-name: "Server Monitor 探针"
-description: "服务器状态监控仪表盘配置面板"
+#name: "Server Monitor 探针"
+#description: "服务器状态监控仪表盘配置面板"
 
 # --- 环境变量配置区 ---
 env_schema:
