@@ -65,7 +65,7 @@ env_schema:
 scriptings:
   - generic:
       name: 黄历信息-HL
-      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/HL.js
+      script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/HL.js?v=336
       
   - generic:
       name: 今日油价-Youjia
