@@ -9,7 +9,7 @@
  * SERVER_USER     : SSH 用户名 (默认: root)
  * SERVER_PORT     : SSH 端口 (默认: 22)
  * SERVER_PASSWORD : SSH 密码 (与 SERVER_KEY 二选一)
- * SERVER_KEY      : SSH 私钥 (支持 OpenSSH/PEM 格式，自动修复换行符)
+ * SERVER_KEY      : SSH 私钥 (支持直接无脑粘贴，自动修复格式和空格)
  * WIDGET_NAME     : 小组件显示的名称 (可选，默认: My Node)
  *
  * 📊 流量统计配置 (二选一):
@@ -32,7 +32,7 @@ export default async function (ctx) {
     port: Number(env.SERVER_PORT) || 22,
     username: env.SERVER_USER || 'root',
     password: env.SERVER_PASSWORD || '',
-    privateKey: (env.SERVER_KEY || '').replace(/\\n/g, '\n'), 
+    privateKey: env.SERVER_KEY || '', 
     bwhVeid: env.BWH_VEID || '',
     bwhApiKey: env.BWH_API_KEY || '',
     trafficLimitGB: Number(env.TRAFFIC_LIMIT) || 2000,
@@ -83,6 +83,25 @@ export default async function (ctx) {
       throw new Error('未配置 SERVER_HOST 环境变量');
     }
 
+    // 🛠️ 新增核心修复：处理私钥格式及换行符问题
+    let finalKey = privateKey;
+    if (privateKey && typeof privateKey === 'string') {
+        const raw = privateKey.trim();
+        const headerMatch = raw.match(/-----BEGIN [A-Z ]+-----/);
+        const footerMatch = raw.match(/-----END [A-Z ]+-----/);
+        
+        if (headerMatch && footerMatch) {
+            const header = headerMatch[0];
+            const footer = footerMatch[0];
+            let body = raw.substring(raw.indexOf(header) + header.length, raw.indexOf(footer));
+            body = body.replace(/\s+/g, '');
+            const lines = body.match(/.{1,64}/g) || [];
+            finalKey = `${header}\n${lines.join('\n')}\n${footer}`;
+        } else {
+            finalKey = raw.replace(/\\n/g, '\n');
+        }
+    }
+
     let bwhData = null;
     if (bwhVeid && bwhApiKey) {
       try {
@@ -91,9 +110,10 @@ export default async function (ctx) {
       } catch (e) { console.log('BWH API Error:', e); }
     }
 
+    // 这里已经替换为 finalKey 来连接 SSH
     const session = await ctx.ssh.connect({
       host, port: Number(port || 22), username,
-      ...(privateKey ? { privateKey } : { password }),
+      ...(finalKey ? { privateKey: finalKey } : { password }),
       timeout: 8000,
     });
 
