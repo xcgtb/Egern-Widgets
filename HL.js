@@ -1,5 +1,5 @@
 /**
- * 代码名称: 📅 日历 / 老黄历 (极简比例优化·防吞字版)
+ * 代码名称: 📅 日历 / 老黄历 (极简比例优化防吞字版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -66,18 +66,19 @@ export default async function(ctx) {
     }
   };
 
-  const todayMs = new Date(Y, M-1, D).getTime();
   const allTerms = [];
   [-1, 0, 1].forEach(offset => {
     for(let i=1; i<=24; i++) allTerms.push({ name: Lunar.termNames[i-1], date: new Date(Y + offset, Math.floor((i-1)/2), Lunar.getTerm(Y + offset, i)) });
   });
 
+  const todayMs = new Date(Y, M-1, D).getTime();
   let currentTerm = "", upcomingTerms = [];
   for (let i = 0; i < allTerms.length; i++) {
     const diff = Math.round((allTerms[i].date.getTime() - todayMs) / 86400000);
     if (diff >= 0) {
       currentTerm = diff === 0 ? allTerms[i].name : allTerms[i-1].name;
       const startIdx = diff === 0 ? i + 1 : i;
+      // 【修改点】将显示的未来节气数量从 4 改为 3
       upcomingTerms = allTerms.slice(startIdx, startIdx + 3).map(t => `${t.name} ${Math.round((t.date.getTime() - todayMs) / 86400000)}天`);
       break;
     }
@@ -151,6 +152,7 @@ export default async function(ctx) {
         foundHolidays.add(h.name);
       }
     }
+    // 【修改点】将显示的节假日数量从 4 改为 3
     if (upcomingHolidays.length >= 3) break; 
   }
 
@@ -188,24 +190,25 @@ export default async function(ctx) {
             ]
           },
           {
+            // 【修改点】右侧列表 gap 从 4 微调为 3
             type: 'stack', direction: 'column', gap: 3, flex: 1, 
             children: [
               { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold },
-              // 🌟 宜：改为 top 对齐，支持 2 行
               {
-                type: 'stack', direction: 'row', alignItems: 'top', gap: 4, 
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4, 
                 backgroundColor: C.yiBg, borderRadius: 6, padding: [2, 4],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.yi, borderRadius: 4, children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  // 【修改点】maxLines 改为 2，允许换行
                   { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 } 
                 ]
               },
-              // 🌟 忌：改为 top 对齐，支持 2 行
               {
-                type: 'stack', direction: 'row', alignItems: 'top', gap: 4,
+                type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 backgroundColor: C.jiBg, borderRadius: 6, padding: [2, 4],
                 children: [
                   { type: 'stack', padding: [1, 3], backgroundColor: C.ji, borderRadius: 4, children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
+                  // 【修改点】maxLines 改为 2，允许换行
                   { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
                 ]
               },
@@ -229,7 +232,7 @@ export default async function(ctx) {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 11, height: 11 },
-              // 🌟 底部文字也支持 2 行，防止吞字
+              // 【修改点】maxLines 改为 2，允许换行
               { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
             ]
           },
@@ -237,7 +240,7 @@ export default async function(ctx) {
             type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 11, height: 11 },
-              // 🌟 底部文字也支持 2 行，防止吞字
+              // 【修改点】maxLines 改为 2，允许换行
               { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 2, flex: 1 }
             ]
           }
