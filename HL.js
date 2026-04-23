@@ -1,5 +1,5 @@
 /*
- * 名称: 📅 日历 / 老黄历 (大字体自适应 + 完美对齐防挤压版)
+ * 名称: 📅 日历 / 老黄历 (完整干支 + 完美冲煞终极修复版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -105,14 +105,24 @@ export default async function(ctx) {
   const rawYi = getVal("yi", "Yi", "suit").replace(/\./g, " ").trim();
   const rawJi = getVal("ji", "Ji", "avoid").replace(/\./g, " ").trim();
 
-  let chongshaInfo = getVal("chongsha", "ChongSha", "chong");
-  if (!chongshaInfo || chongshaInfo === "无") {
-      const cycle = (Math.round((Date.UTC(Y, M-1, D) - Date.UTC(1900,0,31)) / 86400000) + 40) % 60;
-      const dCycle = cycle < 0 ? cycle + 60 : cycle;
-      const dZhi = dCycle % 12;
-      const cIndex = (dCycle + 6) % 60;
-      chongshaInfo = `冲${"鼠牛虎兔龙蛇马羊猴鸡狗猪"[(dZhi+6)%12]}(${"甲乙丙丁戊己庚辛壬癸"[cIndex%10]}${"子丑寅卯辰巳午未申酉戌亥"[cIndex%12]})煞${["南","东","北","西"][dZhi%4]}`;
-  }
+  // ✨ 干支基础数据
+  const stems = "甲乙丙丁戊己庚辛壬癸";
+  const branches = "子丑寅卯辰巳午未申酉戌亥";
+  const animals = "鼠牛虎兔龙蛇马羊猴鸡狗猪";
+
+  // ✨ 精准推算日柱：以 2024-01-01 (甲子日) 为基准
+  let dOffset = Math.floor((Date.UTC(Y, M-1, D) - Date.UTC(2024, 0, 1)) / 86400000) % 60;
+  if (dOffset < 0) dOffset += 60;
+  
+  const rawGzMonth = getVal("gzMonth", "gz_month") || "";
+  const rawGzDate = getVal("gzDate", "gz_day") || (stems[dOffset % 10] + branches[dOffset % 12]);
+  const ganzhiFull = rawGzMonth ? `${obj.gz}(${obj.ani})年 ${rawGzMonth}月 ${rawGzDate}日` : `${obj.gz}(${obj.ani})年 ${rawGzDate}日`;
+
+  // ✨ 核心修复点：六十甲子中，“天克地冲”的干支柱必定是当前日柱倒推 6 位 (等效于 +54)
+  // 此算式完美映射天干(被克)与地支(相冲)
+  const cIndex = (dOffset + 54) % 60; 
+  const dZhi = dOffset % 12;
+  const chongshaInfo = `冲${animals[(dZhi + 6) % 12]}(${stems[cIndex % 10]}${branches[cIndex % 12]})煞${["南","东","北","西"][dZhi % 4]}`;
 
   let todayHoliday = getVal("holiday", "festival", "jiejiari");
   if (!todayHoliday && apiData.type && apiData.type.name) {
@@ -176,14 +186,12 @@ export default async function(ctx) {
             ]
           },
           {
-            // ✨ 修复点1：给列元素增加一点呼吸空间（gap: 3），防止内部上下行太紧绷
             type: 'stack', direction: 'column', gap: 3, flex: 1, 
             children: [
-              { type: 'text', text: `${obj.gz}(${obj.ani})年 ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold, minimumScaleFactor: 0.7 },
+              { type: 'text', text: `${ganzhiFull} · ${obj.term ? `今日${obj.term}` : `当前${currentTerm}`}`, font: { size: 11, weight: 'bold' }, textColor: C.gold, minimumScaleFactor: 0.6 },
               {
                 type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
                 children: [
-                  // ✨ 修复点2：仅固定 width: 16，不写死高度！让它们自然撑开
                   { type: 'stack', width: 16, alignItems: 'center', backgroundColor: C.yi, borderRadius: 4, padding: [1, 0], children: [{ type: 'text', text: "宜", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawYi || "诸事皆宜", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 } 
                 ]
@@ -191,7 +199,6 @@ export default async function(ctx) {
               {
                 type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
                 children: [
-                  // ✨ 修复点2：仅固定 width: 16，不写死高度！
                   { type: 'stack', width: 16, alignItems: 'center', backgroundColor: C.ji, borderRadius: 4, padding: [1, 0], children: [{ type: 'text', text: "忌", font: { size: 9, weight: 'heavy' }, textColor: '#FFFFFF' }] },
                   { type: 'text', text: rawJi || "诸事无忌", font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
                 ]
@@ -199,9 +206,8 @@ export default async function(ctx) {
               {
                 type: 'stack', direction: 'row', alignItems: 'center', gap: 4,
                 children: [
-                  // ✨ 修复点3：给火焰也统一固定为 width: 16 并居中，同样不写死高度。完全解决对齐+变扁问题！
                   { type: 'stack', width: 16, alignItems: 'center', children: [{ type: 'image', src: 'sf-symbol:flame.fill', color: C.ji, width: 11, height: 11 }] },
-                  { type: 'text', text: chongshaInfo.split('煞')[0], font: { size: 11, weight: 'medium' }, textColor: C.sub, minimumScaleFactor: 0.7 },
+                  { type: 'text', text: chongshaInfo, font: { size: 11, weight: 'medium' }, textColor: C.sub, minimumScaleFactor: 0.7 },
                   { type: 'spacer' }
                 ]
               }
