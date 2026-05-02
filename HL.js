@@ -1,5 +1,5 @@
 /*
- * 名称: 📅 日历 / 老黄历 (完整干支 + 完美冲煞终极修复版)
+ * 名称: 📅 日历 / 老黄历 (完整干支 + 完美冲煞 + 饱满排版防截断 + 间距优化版)
  * ==========================================
  */
 export default async function(ctx) {
@@ -105,12 +105,10 @@ export default async function(ctx) {
   const rawYi = getVal("yi", "Yi", "suit").replace(/\./g, " ").trim();
   const rawJi = getVal("ji", "Ji", "avoid").replace(/\./g, " ").trim();
 
-  // ✨ 干支基础数据
   const stems = "甲乙丙丁戊己庚辛壬癸";
   const branches = "子丑寅卯辰巳午未申酉戌亥";
   const animals = "鼠牛虎兔龙蛇马羊猴鸡狗猪";
 
-  // ✨ 精准推算日柱：以 2024-01-01 (甲子日) 为基准
   let dOffset = Math.floor((Date.UTC(Y, M-1, D) - Date.UTC(2024, 0, 1)) / 86400000) % 60;
   if (dOffset < 0) dOffset += 60;
   
@@ -118,8 +116,6 @@ export default async function(ctx) {
   const rawGzDate = getVal("gzDate", "gz_day") || (stems[dOffset % 10] + branches[dOffset % 12]);
   const ganzhiFull = rawGzMonth ? `${obj.gz}(${obj.ani})年 ${rawGzMonth}月 ${rawGzDate}日` : `${obj.gz}(${obj.ani})年 ${rawGzDate}日`;
 
-  // ✨ 核心修复点：六十甲子中，“天克地冲”的干支柱必定是当前日柱倒推 6 位 (等效于 +54)
-  // 此算式完美映射天干(被克)与地支(相冲)
   const cIndex = (dOffset + 54) % 60; 
   const dZhi = dOffset % 12;
   const chongshaInfo = `冲${animals[(dZhi + 6) % 12]}(${stems[cIndex % 10]}${branches[cIndex % 12]})煞${["南","东","北","西"][dZhi % 4]}`;
@@ -217,20 +213,21 @@ export default async function(ctx) {
       },
       { type: 'spacer', length: 6 }, 
       {
-        type: 'stack', direction: 'column', gap: 2, padding: [5, 8], backgroundColor: C.bubbleBg, borderRadius: 8,
+        // ✨ 调整区：gap 提升到 6，padding 提升到 [7, 8]，让节气和节日的上下间距更协调
+        type: 'stack', direction: 'column', gap: 6, padding: [7, 8], backgroundColor: C.bubbleBg, borderRadius: 8,
         children: [
           {
             type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:leaf.fill', color: C.term, width: 11, height: 11 },
-              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
+              { type: 'text', text: upcomingTerms.join(" · "), font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.5 }
             ]
           },
           {
             type: 'stack', direction: 'row', alignItems: 'start', gap: 4,
             children: [
               { type: 'image', src: 'sf-symbol:paperplane.fill', color: C.holiday, width: 11, height: 11 },
-              { type: 'text', text: finalHolidayText, font: { size: 11, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.7 }
+              { type: 'text', text: finalHolidayText, font: { size: 10, weight: 'medium' }, textColor: C.sub, maxLines: 3, flex: 1, minimumScaleFactor: 0.5 }
             ]
           }
         ]
