@@ -1,7 +1,7 @@
 /**
  * 📌 桌面小组件: 🛡️ 网络诊断雷达 (全栈解锁 Pro 版 - 终极缓存与高精中文版)
  * 🎨 全面优化首次加载请求风暴，集成 Smart TTL、网络环境锁与双层高精中文城市映射
-* 🔗 远程拉取链接: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Network-Pro.js
+ * 🔗 远程拉取链接: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Network-Pro.js
  * 💻 GitHub 项目: https://github.com/xcgtb/Egern-Widgets/blob/main/Network-Pro.js
  * 文件名: Network-Pro.js
  */
