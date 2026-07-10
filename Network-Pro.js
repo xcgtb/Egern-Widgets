@@ -113,23 +113,22 @@ export default async function(ctx) {
     networkLockKey = `cellular_${cellType}`;
   }
 
-  // 3. 基础必备实时请求 (🔄 已升级为双栈高可用接口)
+  // 3. 基础必备实时请求 (🔄 换用高可用、高响应双栈 API 组合)
   const fetchLocal = async () => {
     try {
-      // 升级：改用全球中立双栈 API，完美支持直连环境下的本地 v4/v6 获取
-      const res = await ctx.http.get('https://api64.ipify.org?format=json', { headers: commonHeaders, timeout: 3500 });
-      const body = safeParse(await res.text());
-      if (body?.ip) {
-        // 由于 ipify 不带定位，尝试用 ipapi 补全当前直连位置（非必要，挂了也保底）
+      // 换用国内优化的高速双栈测试接口，秒回本地 v4/v6
+      const res = await ctx.http.get('https://test.ipw.cn', { headers: commonHeaders, timeout: 2500 });
+      const ip = (await res.text())?.trim();
+      if (ip) {
         let locStr = "未知";
         try {
-          const locRes = await ctx.http.get(`https://ipapi.co/${body.ip}/json/`, { timeout: 2000 });
+          const locRes = await ctx.http.get(`https://ipapi.co/${ip}/json/`, { timeout: 2000 });
           const locBody = safeParse(await locRes.text());
           if (locBody.country_name) {
             locStr = `${locBody.country_name} ${locBody.city || ""}`.trim();
           }
         } catch {}
-        return { ip: body.ip, loc: locStr };
+        return { ip: ip, loc: locStr };
       }
     } catch (e) {}
     return { ip: "获取失败", loc: "未知" };
@@ -137,12 +136,16 @@ export default async function(ctx) {
 
   const fetchProxyRawIP = async () => {
     try {
-      // 💥 关键修改：从限制死 v4 的 'v4.ident.me' 升级为双栈通吃的 'api64.ipify.org'
-      // 代理节点是 v4 就返 v4，是 v6 就返 v6
-      const res = await ctx.http.get('https://api64.ipify.org', { timeout: 3000 });
-      const ip = (await res.text())?.trim();
-      return ip || null;
-    } catch { return null; }
+      // 换用 Cloudflare 维护的 icanhazip，Anycast 架构走代理速度极快且原生支持双栈
+      const res = await ctx.http.get('https://icanhazip.com', { timeout: 2500 });
+      return (await res.text())?.trim() || null;
+    } catch {
+      // 备用高容错双栈接口
+      try {
+        const res = await ctx.http.get('https://ident.me', { timeout: 2500 });
+        return (await res.text())?.trim() || null;
+      } catch { return null; }
+    }
   };
 
   const fetchLocalDelay = async () => {
@@ -235,7 +238,6 @@ export default async function(ctx) {
     finalUnlocks = masterCache.unlocks;
   } else {
     const fetchProxyFull = async () => {
-      // ipapi.co 原生完美支持传入 IPv6 抓取详情数据
       try { const res = await ctx.http.get(`https://ipapi.co/${currentIP}/json/`, { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
     };
     const fetchPurityFull = async () => {
@@ -262,7 +264,7 @@ export default async function(ctx) {
       "RU": "俄罗斯", "IT": "意大利", "ES": "西班牙", "CH": "瑞士", "SE": "瑞典", 
       "NO": "挪威", "FI": "芬兰", "DK": "丹麦", "IE": "爱尔兰", "BE": "比利时", 
       "AT": "奥地利", "PL": "波兰", "CZ": "捷克", "HU": "匈牙利", "RO": "罗马尼亚", 
-      "UA": "乌克兰", "TR": "土耳举", "GR": "希腊", "PT": "葡萄牙", "BG": "保加利亚",
+      "UA": "乌克兰", "TR": "土耳其", "GR": "希腊", "PT": "葡萄牙", "BG": "保加利亚",
       "EE": "爱沙尼亚", "LV": "拉脱维亚", "LT": "立陶宛", "LU": "卢森堡", "IS": "冰岛",
       "SK": "斯洛伐克", "SI": "斯洛文尼亚", "HR": "克罗地亚", "RS": "塞尔维亚", "CY": "塞浦路斯",
       "AE": "阿联酋", "SA": "沙特", "IL": "以色列", "ZA": "南非", "EG": "埃及", 
@@ -276,7 +278,7 @@ export default async function(ctx) {
       "hong kong": "香港", "hongkong": "香港", "taipei": "台北", "hsinchu": "新竹", 
       "singapore": "新加坡", "seoul": "首尔", "incheon": "仁川", "macau": "澳门",
       "bangkok": "曼谷", "kuala lumpur": "吉隆坡", "manila": "马尼拉", "jakarta": "雅加达",
-      "ho chi mich city": "胡志明市", "hanoi": "河内", "phnom penh": "金边",
+      "ho chi minh city": "胡志明市", "hanoi": "河内", "phnom penh": "金边",
       "mumbai": "孟买", "bangalore": "班加罗尔", "chennai": "金奈", "new delhi": "新德里",
       "sydney": "悉尼", "melbourne": "墨尔本", "brisbane": "布里斯班", "perth": "珀斯",
       "los angeles": "洛杉矶", "san francisco": "旧金山", "new york": "纽约", 
@@ -290,7 +292,7 @@ export default async function(ctx) {
       "manchester": "曼彻斯特", "berlin": "柏林", "munich": "慕尼黑", "hamburg": "汉堡",
       "marseille": "马赛", "milan": "米兰", "rome": "罗马", "madrid": "马德里", "barcelona": "巴塞罗那",
       "zurich": "苏黎世", "geneva": "日内瓦", "stockholm": "斯德哥尔摩", "oslo": "奥斯陆",
-      "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都柏林", "brussels": "布鲁塞尔",
+      "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都杯林", "brussels": "布鲁塞尔",
       "vienna": "维也纳", "warsaw": "华沙", "prague": "布拉格", "budapest": "布达佩斯",
       "moscow": "莫斯科", "st petersburg": "圣彼得堡", "saint petersburg": "圣彼得堡",
       "kiev": "基辅", "kyiv": "基辅", "istanbul": "伊斯坦布尔", "lisbon": "里斯本",
@@ -384,7 +386,7 @@ export default async function(ctx) {
               Row(netIcon, C.cpu, "环境", netName, C.text),
               Row("wifi.router.fill", C.cpu, "网关", gateway, C.text),
               Row("iphone", C.cpu, "内网", fmtIP(localIp), C.text),             
-              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), // ✨ 保留并激活了本地公网的 IPv6 缩短
+              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), // 自动识别本地双栈，超长 IPv6 触发 fmtIP
               Row("map.fill", C.cpu, "位置", localData.loc, C.text),
               Row("timer", C.cpu, "延迟", localDelay, C.text), 
               Row("play.tv.fill", C.cpu, "影视", textVideo, C.text) 
@@ -395,7 +397,7 @@ export default async function(ctx) {
           
           // 【右边栏】：中转代理出口
           { type: 'stack', direction: 'column', gap: 4.5, flex: 1, children: [
-              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text),       // ✨ 保留并激活了代理出口的 IPv6 缩短
+              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text),       // 自动识别节点双栈，超长 IPv6 触发 fmtIP
               Row("mappin.and.ellipse", C.mem, "落地", finalProxy.loc, C.text),
               Row("server.rack", C.mem, "厂商", fmtProxyISP(finalProxy.isp), C.text),
               Row(nativeIc, nativeCol, "属性", nativeText, C.text), 
