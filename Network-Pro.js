@@ -1,6 +1,6 @@
 /**
- * 📌 桌面小组件: 🛡️ 网络诊断雷达 (全栈解锁 Pro 版 - 终极缓存与高精中文版)
- * 🎨 全面优化首次加载请求风暴，集成 Smart TTL、网络环境锁与双层高精中文城市映射
+ * 📌 桌面小组件: 🛡️ 网络诊断雷达 (实时全量刷新 + 释放 IPv6 落地版)
+ * 🎨 解锁落地出口的 IPv6 限制，完美适配双栈/纯 v6 代理节点，集成动态缩短防挤压
  * 文件名: Network-Pro.js
  */
 export default async function(ctx) {
@@ -20,10 +20,6 @@ export default async function(ctx) {
     yellow: { light: '#FFCC00', dark: '#FFD60A' },
     red: { light: '#FF3B30', dark: '#FF453A' }
   };
-
-  // --- 基础配置与安全解析 ---
-  const CACHE_KEY = "network_radar_master_cache";
-  const CACHE_TTL = 15 * 60 * 1000; // 缓存有效期定为 15 分钟
 
   const safeParse = (text) => {
     if (!text) return {};
@@ -62,14 +58,6 @@ export default async function(ctx) {
     return String.fromCodePoint(...code.toUpperCase().split('').map(c => 127397 + c.charCodeAt()));
   };
 
-  // --- 持久化缓存读写 ---
-  const getCache = async () => {
-    try { return ctx.storage && typeof ctx.storage.get === 'function' ? await ctx.storage.get(CACHE_KEY) : null; } catch { return null; }
-  };
-  const setCache = async (val) => {
-    try { if (ctx.storage && typeof ctx.storage.set === 'function') { await ctx.storage.set(CACHE_KEY, val); } } catch {}
-  };
-
   // 高级浏览器请求头伪装
   const BASE_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
   const commonHeaders = { 
@@ -88,7 +76,7 @@ export default async function(ctx) {
     return "";
   };
 
-  // 2. 获取本地网络状态与生成网络锁（Network Key）
+  // 2. 获取本地网络状态
   const d = ctx.device || {};
   const isWifi = !!d.wifi?.ssid;
   let netName = "未连接", netIcon = "antenna.radiowaves.left.and.right";
@@ -97,20 +85,17 @@ export default async function(ctx) {
   let localIp = netInfo.v4?.primaryAddress || d.ipv4?.address || "获取失败";
   let gateway = netInfo.v4?.primaryRouter || d.ipv4?.gateway || "无网关";
 
-  let networkLockKey = "no_connection";
   if (isWifi) { 
     netName = d.wifi.ssid; 
     netIcon = "wifi"; 
-    networkLockKey = `wifi_${d.wifi.ssid}`;
   } else if (d.cellular?.radio) {
     const radioMap = { "GPRS": "2.5G", "EDGE": "2.75G", "WCDMA": "3G", "LTE": "4G", "NR": "5G", "NRNSA": "5G" };
     const cellType = radioMap[d.cellular.radio.toUpperCase().replace(/\s+/g, "")] || d.cellular.radio;
     netName = cellType;
     gateway = "蜂窝内网";
-    networkLockKey = `cellular_${cellType}`;
   }
 
-  // 3. 基础必备实时请求
+  // 3. 第一阶段实时请求
   const fetchLocal = async () => {
     try {
       const res = await ctx.http.get('https://myip.ipip.net/json', { headers: commonHeaders, timeout: 3500 });
@@ -120,9 +105,10 @@ export default async function(ctx) {
     return { ip: "获取失败", loc: "未知" };
   };
 
+  // ⚡ 关键修改：移除 v4 限制，允许获取 IPv6 落地出口地址
   const fetchProxyRawIP = async () => {
     try {
-      const res = await ctx.http.get('https://v4.ident.me', { timeout: 3000 });
+      const res = await ctx.http.get('https://ident.me', { timeout: 3000 });
       const ip = (await res.text())?.trim();
       return ip || null;
     } catch { return null; }
@@ -194,126 +180,91 @@ export default async function(ctx) {
     } catch { return "❌"; }
   }
 
-  // 执行第一阶段轻量并发请求
+  // 执行第一阶段并发请求
   const [localData, proxyRawIP, localDelay, proxyDelay] = await Promise.all([
     fetchLocal(), fetchProxyRawIP(), fetchLocalDelay(), fetchProxyDelay()
   ]);
 
-  // 4. 第二阶段：多维联动智能缓存调度与高级汉化字典
+  // 4. 第二阶段：远端高精地理数据及解锁并发请求
   const currentIP = proxyRawIP || "获取失败";
-  const rawCache = await getCache();
-  const masterCache = rawCache ? safeParse(rawCache) : null;
 
-  let finalProxy = null;
-  let finalPurity = null;
-  let finalUnlocks = null;
+  const fetchProxyFull = async () => {
+    try { const res = await ctx.http.get(`https://ipapi.co/${currentIP}/json/`, { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
+  };
+  const fetchPurityFull = async () => {
+    try { const res = await ctx.http.get('https://my.ippure.com/v1/info', { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
+  };
 
-  if (masterCache && 
-      masterCache.ip === currentIP && 
-      masterCache.networkLock === networkLockKey && 
-      (Date.now() - masterCache.timestamp < CACHE_TTL)) {
-    
-    finalProxy = masterCache.proxyData;
-    finalPurity = masterCache.purityData;
-    finalUnlocks = masterCache.unlocks;
-  } else {
-    const fetchProxyFull = async () => {
-      try { const res = await ctx.http.get(`https://ipapi.co/${currentIP}/json/`, { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
-    };
-    const fetchPurityFull = async () => {
-      try { const res = await ctx.http.get('https://my.ippure.com/v1/info', { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
-    };
+  const [fullData, purData, rNF, rDP, rTK, rGPT, rCL, rGM] = await Promise.all([
+    fetchProxyFull(), fetchPurityFull(),
+    checkNetflix(), checkDisney(), checkTikTok(), checkChatGPT(), checkClaude(), checkGemini()
+  ]);
 
-    const [fullData, purData, rNF, rDP, rTK, rGPT, rCL, rGM] = await Promise.all([
-      fetchProxyFull(), fetchPurityFull(),
-      checkNetflix(), checkDisney(), checkTikTok(), checkChatGPT(), checkClaude(), checkGemini()
-    ]);
+  const cc = fullData.country_code || "XX";
+  
+  // 国家/地区高级映射字典
+  const ccMap = {
+    "CN": "中国", "HK": "香港", "MO": "澳门", "TW": "台湾", "SG": "新加坡", 
+    "JP": "日本", "KR": "韩国", "MY": "马来西亚", "TH": "泰国", "VN": "越南", 
+    "PH": "菲律宾", "ID": "印尼", "IN": "印度", "AU": "澳大利亚", "NZ": "新西兰",
+    "KH": "柬埔寨", "LA": "老挝", "MM": "缅甸", "PK": "巴基斯坦", "BD": "孟加拉",
+    "LK": "斯里兰卡", "KZ": "哈萨克斯坦", "UZ": "乌兹别克斯坦", "FJ": "斐济",
+    "US": "美国", "CA": "加拿大", "MX": "墨西哥", "BR": "巴西", "AR": "阿根廷", 
+    "CL": "智利", "CO": "哥伦比亚", "PE": "秘鲁", "UY": "乌拉圭", "PA": "巴拿马",
+    "UK": "英国", "GB": "英国", "DE": "德国", "FR": "法国", "NL": "荷兰", 
+    "RU": "俄罗斯", "IT": "意大利", "ES": "西班牙", "CH": "瑞士", "SE": "瑞典", 
+    "NO": "挪威", "FI": "芬兰", "DK": "丹麦", "IE": "爱尔兰", "BE": "比利时", 
+    "AT": "奥地利", "PL": "波兰", "CZ": "捷克", "HU": "匈牙利", "RO": "罗马尼亚", 
+    "UA": "乌克兰", "TR": "土耳其", "GR": "希腊", "PT": "葡萄牙", "BG": "保加利亚",
+    "EE": "爱沙尼亚", "LV": "拉脱维亚", "LT": "立陶宛", "LU": "卢森堡", "IS": "冰岛",
+    "SK": "斯洛伐克", "SI": "斯洛文尼亚", "HR": "克罗地亚", "RS": "塞尔维亚", "CY": "塞浦路斯",
+    "AE": "阿联酋", "SA": "沙特", "IL": "以色列", "ZA": "南非", "EG": "埃及", 
+    "MA": "摩洛哥", "KW": "科威特", "QA": "卡塔尔", "OM": "阿曼", "BH": "巴林",
+    "NG": "尼日利亚", "KE": "肯尼亚", "GH": "加纳", "DZ": "阿尔及利亚"
+  };
 
-    const cc = fullData.country_code || "XX";
-    
-    // 🌍 【拉满】全球主流及延伸代理节点——国家/地区高级映射字典
-    const ccMap = {
-      // 亚洲及大洋洲
-      "CN": "中国", "HK": "香港", "MO": "澳门", "TW": "台湾", "SG": "新加坡", 
-      "JP": "日本", "KR": "韩国", "MY": "马来西亚", "TH": "泰国", "VN": "越南", 
-      "PH": "菲律宾", "ID": "印尼", "IN": "印度", "AU": "澳大利亚", "NZ": "新西兰",
-      "KH": "柬埔寨", "LA": "老挝", "MM": "缅甸", "PK": "巴基斯坦", "BD": "孟加拉",
-      "LK": "斯里兰卡", "KZ": "哈萨克斯坦", "UZ": "乌兹别克斯坦", "FJ": "斐济",
-      // 北美及南美
-      "US": "美国", "CA": "加拿大", "MX": "墨西哥", "BR": "巴西", "AR": "阿根廷", 
-      "CL": "智利", "CO": "哥伦比亚", "PE": "秘鲁", "UY": "乌拉圭", "PA": "巴拿马",
-      // 欧洲地区
-      "UK": "英国", "GB": "英国", "DE": "德国", "FR": "法国", "NL": "荷兰", 
-      "RU": "俄罗斯", "IT": "意大利", "ES": "西班牙", "CH": "瑞士", "SE": "瑞典", 
-      "NO": "挪威", "FI": "芬兰", "DK": "丹麦", "IE": "爱尔兰", "BE": "比利时", 
-      "AT": "奥地利", "PL": "波兰", "CZ": "捷克", "HU": "匈牙利", "RO": "罗马尼亚", 
-      "UA": "乌克兰", "TR": "土耳其", "GR": "希腊", "PT": "葡萄牙", "BG": "保加利亚",
-      "EE": "爱沙尼亚", "LV": "拉脱维亚", "LT": "立陶宛", "LU": "卢森堡", "IS": "冰岛",
-      "SK": "斯洛伐克", "SI": "斯洛文尼亚", "HR": "克罗地亚", "RS": "塞尔维亚", "CY": "塞浦路斯",
-      // 中东及非洲
-      "AE": "阿联酋", "SA": "沙特", "IL": "以色列", "ZA": "南非", "EG": "埃及", 
-      "MA": "摩洛哥", "KW": "科威特", "QA": "卡塔尔", "OM": "阿曼", "BH": "巴林",
-      "NG": "尼日利亚", "KE": "肯尼亚", "GH": "加纳", "DZ": "阿尔及利亚"
-    };
+  // 核心云机房城市高级汉化字典
+  const cityMap = {
+    "tokyo": "东京", "osaka": "大阪", "nagoya": "名古屋", "fukuoka": "福冈",
+    "hong kong": "香港", "hongkong": "香港", "taipei": "台北", "hsinchu": "新竹", 
+    "singapore": "新加坡", "seoul": "首尔", "incheon": "仁川", "macau": "澳门",
+    "bangkok": "曼谷", "kuala lumpur": "吉隆坡", "manila": "马尼拉", "jakarta": "雅加达",
+    "ho chi minh city": "胡志明市", "hanoi": "河内", "phnom penh": "金边",
+    "mumbai": "孟办", "bangalore": "班加罗尔", "chennai": "金奈", "new delhi": "新德里",
+    "sydney": "悉尼", "melbourne": "墨尔本", "brisbane": "布里斯班", "perth": "珀斯",
+    "los angeles": "洛杉矶", "san francisco": "旧金山", "new york": "纽约", 
+    "seattle": "西雅图", "sanjose": "圣何塞", "san jose": "圣何塞", "santa clara": "圣克拉拉", 
+    "chicago": "芝加哥", "miami": "迈阿密", "ashburn": "阿什本", "oregon": "俄勒冈", 
+    "dallas": "达拉斯", "atlanta": "亚特兰大", "phoenix": "凤凰城", "houston": "休斯敦",
+    "denver": "丹佛", "salt lake city": "盐湖城", "las vegas": "拉斯维加斯", "boston": "波士顿",
+    "toronto": "多伦多", "montreal": "蒙特利尔", "vancouver": "温哥华", "mexico city": "墨西哥城",
+    "sao paulo": "圣保罗", "rio de janeiro": "里约热内卢", "buenos aires": "布宜诺斯艾利斯", "santiago": "圣地亚哥",
+    "frankfurt": "法兰克福", "london": "伦敦", "paris": "巴黎", "amsterdam": "阿姆斯特丹",
+    "manchester": "曼彻斯特", "berlin": "柏林", "munich": "慕尼黑", "hamburg": "汉堡",
+    "marseille": "马赛", "milan": "米兰", "rome": "罗马", "madrid": "马德里", "barcelona": "巴塞罗那",
+    "zurich": "苏黎世", "geneva": "日内瓦", "stockholm": "斯德哥尔摩", "oslo": "奥斯陆",
+    "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都柏林", "brussels": "布鲁塞尔",
+    "vienna": "维也纳", "warsaw": "华沙", "prague": "布格", "budapest": "布达佩斯",
+    "moscow": "莫斯科", "st petersburg": "圣彼得堡", "saint petersburg": "圣彼得堡",
+    "kiev": "基辅", "kyiv": "基辅", "istanbul": "伊斯坦布尔", "lisbon": "里斯本",
+    "dubai": "迪拜", "abu dhabi": "阿布扎比", "riyadh": "利雅得", "jeddah": "吉达",
+    "tel aviv": "特拉维夫", "johannesburg": "约翰内斯堡", "cape town": "开普敦", "cairo": "开罗"
+  };
 
-    // 🏙️ 【拉满】核心中转与数据中心城市高级汉化字典 (全小写键防错)
-    const cityMap = {
-      // 亚洲及大洋洲区域
-      "tokyo": "东京", "osaka": "大阪", "nagoya": "名古屋", "fukuoka": "福冈",
-      "hong kong": "香港", "hongkong": "香港", "taipei": "台北", "hsinchu": "新竹", 
-      "singapore": "新加坡", "seoul": "首尔", "incheon": "仁川", "macau": "澳门",
-      "bangkok": "曼谷", "kuala lumpur": "吉隆坡", "manila": "马尼拉", "jakarta": "雅加达",
-      "ho chi minh city": "胡志明市", "hanoi": "河内", "phnom penh": "金边",
-      "mumbai": "孟买", "bangalore": "班加罗尔", "chennai": "金奈", "new delhi": "新德里",
-      "sydney": "悉尼", "melbourne": "墨尔本", "brisbane": "布里斯班", "perth": "珀斯",
-      // 美洲核心云机房
-      "los angeles": "洛杉矶", "san francisco": "旧金山", "new york": "纽约", 
-      "seattle": "西雅图", "sanjose": "圣何塞", "san jose": "圣何塞", "santa clara": "圣克拉拉", 
-      "chicago": "芝加哥", "miami": "迈阿密", "ashburn": "阿什本", "oregon": "俄勒冈", 
-      "dallas": "达拉斯", "atlanta": "亚特兰大", "phoenix": "凤凰城", "houston": "休斯敦",
-      "denver": "丹佛", "salt lake city": "盐湖城", "las vegas": "拉斯维加斯", "boston": "波士顿",
-      "toronto": "多伦多", "montreal": "蒙特利尔", "vancouver": "温哥华", "mexico city": "墨西哥城",
-      "sao paulo": "圣保罗", "rio de janeiro": "里约热内卢", "buenos aires": "布宜诺斯艾利斯", "santiago": "圣地亚哥",
-      // 欧洲核心区域
-      "frankfurt": "法兰克福", "london": "伦敦", "paris": "巴黎", "amsterdam": "阿姆斯特丹",
-      "manchester": "曼彻斯特", "berlin": "柏林", "munich": "慕尼黑", "hamburg": "汉堡",
-      "marseille": "马赛", "milan": "米兰", "rome": "罗马", "madrid": "马德里", "barcelona": "巴塞罗那",
-      "zurich": "苏黎世", "geneva": "日内瓦", "stockholm": "斯德哥尔摩", "oslo": "奥斯陆",
-      "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都柏林", "brussels": "布鲁塞尔",
-      "vienna": "维也纳", "warsaw": "华沙", "prague": "布拉格", "budapest": "布达佩斯",
-      "moscow": "莫斯科", "st petersburg": "圣彼得堡", "saint petersburg": "圣彼得堡",
-      "kiev": "基辅", "kyiv": "基辅", "istanbul": "伊斯坦布尔", "lisbon": "里斯本",
-      // 中东与非洲
-      "dubai": "迪拜", "abu dhabi": "阿布扎比", "riyadh": "利雅得", "jeddah": "吉达",
-      "tel aviv": "特拉维夫", "johannesburg": "约翰内斯堡", "cape town": "开普敦", "cairo": "开罗"
-    };
+  const cityName = fullData.city || "";
+  const cnCountry = ccMap[cc.toUpperCase()] || fullData.country_name || "未知";
+  const cnCity = cityMap[cityName.toLowerCase()] || cityName;
+  
+  const finalLocationString = (cnCountry === cnCity || cnCity === "") ? cnCountry : `${cnCountry} ${cnCity}`;
 
-    const cityName = fullData.city || "";
-    const cnCountry = ccMap[cc.toUpperCase()] || fullData.country_name || "未知";
-    const cnCity = cityMap[cityName.toLowerCase()] || cityName;
-    
-    const finalLocationString = (cnCountry === cnCity || cnCity === "") ? cnCountry : `${cnCountry} ${cnCity}`;
-
-    finalProxy = {
-      ip: fullData.ip || currentIP,
-      loc: `${getFlag(cc)} ${finalLocationString}`.trim(),
-      isp: fmtProxyISP(fullData.org || fullData.asn),
-      cc: cc
-    };
-    finalPurity = purData;
-    finalUnlocks = { rNF, rDP, rTK, rGPT, rCL, rGM };
-
-    if (currentIP !== "获取失败" && fullData.ip) {
-      await setCache(JSON.stringify({
-        ip: currentIP,
-        networkLock: networkLockKey,
-        timestamp: Date.now(),
-        proxyData: finalProxy,
-        purityData: finalPurity,
-        unlocks: finalUnlocks
-      }));
-    }
-  }
+  const finalProxy = {
+    ip: fullData.ip || currentIP,
+    loc: `${getFlag(cc)} ${finalLocationString}`.trim(),
+    isp: fmtProxyISP(fullData.org || fullData.asn),
+    cc: cc
+  };
+  const finalPurity = purData;
+  const finalUnlocks = { rNF, rDP, rTK, rGPT, rCL, rGM };
 
   // 5. 数据清洗与规范化转换
   const isRes = finalPurity?.isResidential;
