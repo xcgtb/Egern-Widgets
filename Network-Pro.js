@@ -1,8 +1,6 @@
 /**
- * 📌 桌面小组件: 🛡️ 网络诊断雷达 (全栈解锁 Pro 版 - 终极缓存与双栈高精版)
+ * 📌 桌面小组件: 🛡️ 网络诊断雷达 (全栈解锁 Pro 版 - 终极缓存与高精中文版)
  * 🎨 全面优化首次加载请求风暴，集成 Smart TTL、网络环境锁与双层高精中文城市映射
- * 🔗 远程拉取链接: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Network-Pro.js
- * 💻 GitHub 项目: https://github.com/xcgtb/Egern-Widgets/blob/main/Network-Pro.js
  * 文件名: Network-Pro.js
  */
 export default async function(ctx) {
@@ -37,7 +35,6 @@ export default async function(ctx) {
     if (!ip || typeof ip !== 'string') return "获取失败";
     if (ip.includes(':') && ip.length > 16) {
       const parts = ip.split(':');
-      // 缩短逻辑：保留前两段和最后一段，中间用 ... 省略
       return parts.length > 2 ? `${parts[0]}:${parts[1]}...${parts[parts.length - 1]}` : ip;
     }
     return ip;
@@ -113,39 +110,23 @@ export default async function(ctx) {
     networkLockKey = `cellular_${cellType}`;
   }
 
-  // 3. 基础必备实时请求 (🔄 换用高可用、高响应双栈 API 组合)
+  // 3. 基础必备实时请求
   const fetchLocal = async () => {
     try {
-      // 换用国内优化的高速双栈测试接口，秒回本地 v4/v6
-      const res = await ctx.http.get('https://test.ipw.cn', { headers: commonHeaders, timeout: 2500 });
-      const ip = (await res.text())?.trim();
-      if (ip) {
-        let locStr = "未知";
-        try {
-          const locRes = await ctx.http.get(`https://ipapi.co/${ip}/json/`, { timeout: 2000 });
-          const locBody = safeParse(await locRes.text());
-          if (locBody.country_name) {
-            locStr = `${locBody.country_name} ${locBody.city || ""}`.trim();
-          }
-        } catch {}
-        return { ip: ip, loc: locStr };
-      }
+      const res = await ctx.http.get('https://myip.ipip.net/json', { headers: commonHeaders, timeout: 3500 });
+      const body = safeParse(await res.text());
+      if (body?.data?.ip) return { ip: body.data.ip, loc: `${body.data.location[1] || ""} ${body.data.location[2] || ""}`.trim() };
     } catch (e) {}
     return { ip: "获取失败", loc: "未知" };
   };
 
+  // 🛠️ 优化点：去掉 v4. 前缀，升级为支持双栈的接口。代理节点支持 v6 时将直接返回 v6 地址
   const fetchProxyRawIP = async () => {
     try {
-      // 换用 Cloudflare 维护的 icanhazip，Anycast 架构走代理速度极快且原生支持双栈
-      const res = await ctx.http.get('https://icanhazip.com', { timeout: 2500 });
-      return (await res.text())?.trim() || null;
-    } catch {
-      // 备用高容错双栈接口
-      try {
-        const res = await ctx.http.get('https://ident.me', { timeout: 2500 });
-        return (await res.text())?.trim() || null;
-      } catch { return null; }
-    }
+      const res = await ctx.http.get('https://ident.me', { timeout: 3000 });
+      const ip = (await res.text())?.trim();
+      return ip || null;
+    } catch { return null; }
   };
 
   const fetchLocalDelay = async () => {
@@ -238,6 +219,7 @@ export default async function(ctx) {
     finalUnlocks = masterCache.unlocks;
   } else {
     const fetchProxyFull = async () => {
+      // ipapi.co 原生支持传递并解析 IPv6 地址
       try { const res = await ctx.http.get(`https://ipapi.co/${currentIP}/json/`, { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
     };
     const fetchPurityFull = async () => {
@@ -251,7 +233,7 @@ export default async function(ctx) {
 
     const cc = fullData.country_code || "XX";
     
-    // 🌍 国家/地区高级映射字典
+    // 全球国家/地区高级映射字典
     const ccMap = {
       "CN": "中国", "HK": "香港", "MO": "澳门", "TW": "台湾", "SG": "新加坡", 
       "JP": "日本", "KR": "韩国", "MY": "马来西亚", "TH": "泰国", "VN": "越南", 
@@ -272,7 +254,7 @@ export default async function(ctx) {
       "NG": "尼日利亚", "KE": "肯尼亚", "GH": "加纳", "DZ": "阿尔及利亚"
     };
 
-    // 🏙️ 核心云机房城市高级汉化字典
+    // 数据中心城市高级汉化字典
     const cityMap = {
       "tokyo": "东京", "osaka": "大阪", "nagoya": "名古屋", "fukuoka": "福冈",
       "hong kong": "香港", "hongkong": "香港", "taipei": "台北", "hsinchu": "新竹", 
@@ -292,7 +274,7 @@ export default async function(ctx) {
       "manchester": "曼彻斯特", "berlin": "柏林", "munich": "慕尼黑", "hamburg": "汉堡",
       "marseille": "马赛", "milan": "米兰", "rome": "罗马", "madrid": "马德里", "barcelona": "巴塞罗那",
       "zurich": "苏黎世", "geneva": "日内瓦", "stockholm": "斯德哥尔摩", "oslo": "奥斯陆",
-      "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都杯林", "brussels": "布鲁塞尔",
+      "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都柏林", "brussels": "布鲁塞尔",
       "vienna": "维也纳", "warsaw": "华沙", "prague": "布拉格", "budapest": "布达佩斯",
       "moscow": "莫斯科", "st petersburg": "圣彼得堡", "saint petersburg": "圣彼得堡",
       "kiev": "基辅", "kyiv": "基辅", "istanbul": "伊斯坦布尔", "lisbon": "里斯本",
@@ -386,7 +368,7 @@ export default async function(ctx) {
               Row(netIcon, C.cpu, "环境", netName, C.text),
               Row("wifi.router.fill", C.cpu, "网关", gateway, C.text),
               Row("iphone", C.cpu, "内网", fmtIP(localIp), C.text),             
-              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), // 自动识别本地双栈，超长 IPv6 触发 fmtIP
+              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), 
               Row("map.fill", C.cpu, "位置", localData.loc, C.text),
               Row("timer", C.cpu, "延迟", localDelay, C.text), 
               Row("play.tv.fill", C.cpu, "影视", textVideo, C.text) 
@@ -397,9 +379,9 @@ export default async function(ctx) {
           
           // 【右边栏】：中转代理出口
           { type: 'stack', direction: 'column', gap: 4.5, flex: 1, children: [
-              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text),       // 自动识别节点双栈，超长 IPv6 触发 fmtIP
+              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text), // 当接入提供 v6 的代理节点时，这里将完美呈现智能缩短后的 IPv6 地址
               Row("mappin.and.ellipse", C.mem, "落地", finalProxy.loc, C.text),
-              Row("server.rack", C.mem, "厂商", fmtProxyISP(finalProxy.isp), C.text),
+              Row("server.rack", C.mem, "厂商", finalProxy.isp, C.text),
               Row(nativeIc, nativeCol, "属性", nativeText, C.text), 
               Row(riskIc, riskCol, "纯净", riskTxt, riskCol),
               Row("timer", C.mem, "延迟", proxyDelay, C.text), 
