@@ -30,13 +30,11 @@ export default async function(ctx) {
     try { return JSON.parse(text); } catch { return {}; }
   };
 
-  // 🛠️ 新增：IP 地址动态缩短优化函数（防止 IPv6 挤压字号）
+  // IP 地址动态缩短优化函数（防止 IPv6 挤压字号）
   const fmtIP = (ip) => {
     if (!ip || typeof ip !== 'string') return "获取失败";
-    // 判断是否为长 IPv6 地址
     if (ip.includes(':') && ip.length > 16) {
       const parts = ip.split(':');
-      // 取前两个段和最后一个段进行拼接，如 2409:8a70...5629
       return parts.length > 2 ? `${parts[0]}:${parts[1]}...${parts[parts.length - 1]}` : ip;
     }
     return ip;
@@ -112,7 +110,7 @@ export default async function(ctx) {
     networkLockKey = `cellular_${cellType}`;
   }
 
-  // 3. 基础必备实时请求（无论是否命中缓存，延迟与本地公网 IP 必须实时刷新）
+  // 3. 基础必备实时请求
   const fetchLocal = async () => {
     try {
       const res = await ctx.http.get('https://myip.ipip.net/json', { headers: commonHeaders, timeout: 3500 });
@@ -126,7 +124,7 @@ export default async function(ctx) {
     try {
       const res = await ctx.http.get('https://v4.ident.me', { timeout: 3000 });
       const ip = (await res.text())?.trim();
-      return ip || null; // 移除纯 IPv4 正则校验，使其兼顾代理出口为 IPv6 的情况
+      return ip || null;
     } catch { return null; }
   };
 
@@ -140,7 +138,7 @@ export default async function(ctx) {
     try { await ctx.http.get('https://cp.cloudflare.com/generate_204', { timeout: 2000 }); return `${Date.now() - start} ms`; } catch (e) { return "超时"; }
   };
 
-  // --- 流媒体与 AI 解锁原始检测逻辑 ---
+  // --- 流媒体与 AI 解锁检测逻辑 ---
   async function checkNetflix() {
     try {
       const checkStatus = async (id) => {
@@ -210,18 +208,15 @@ export default async function(ctx) {
   let finalPurity = null;
   let finalUnlocks = null;
 
-  // 检查缓存状态 (IP一致 且 网络锁未变 且 未过TTL时间)
   if (masterCache && 
       masterCache.ip === currentIP && 
       masterCache.networkLock === networkLockKey && 
       (Date.now() - masterCache.timestamp < CACHE_TTL)) {
     
-    // 🔥 完美命中缓存：直接同步读取历史数据，本轮跳过后续 8 个重度请求！
     finalProxy = masterCache.proxyData;
     finalPurity = masterCache.purityData;
     finalUnlocks = masterCache.unlocks;
   } else {
-    // 🔄 缓存失效 / 穿透检测：发起流媒体检测与厂商画像查询
     const fetchProxyFull = async () => {
       try { const res = await ctx.http.get(`https://ipapi.co/${currentIP}/json/`, { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
     };
@@ -236,34 +231,67 @@ export default async function(ctx) {
 
     const cc = fullData.country_code || "XX";
     
-    // 全球主流及延伸代理节点中文映射字典
+    // 🌍 【拉满】全球主流及延伸代理节点——国家/地区高级映射字典
     const ccMap = {
-      "HK": "香港", "SG": "新加坡", "JP": "日本", "US": "美国", "TW": "台湾", 
-      "KR": "韩国", "UK": "英国", "DE": "德国", "FR": "法国", "NL": "荷兰", 
-      "RU": "俄罗斯", "CN": "中国", "MY": "马来西亚", "TH": "泰国", "VN": "越南", 
-      "PH": "菲律宾", "IN": "印度", "ID": "印尼", "AU": "澳大利亚", "CA": "加拿大", 
-      "BR": "巴西", "MX": "墨西哥", "ZA": "南非", "TR": "土耳其", "UA": "乌克兰", 
-      "AE": "阿联酋", "SA": "沙特", "IT": "意大利", "ES": "西班牙", "CH": "瑞士",
-      "SE": "瑞典", "NO": "挪威", "FI": "芬兰", "DK": "丹麦", "NZ": "新西兰"
+      // 亚洲及大洋洲
+      "CN": "中国", "HK": "香港", "MO": "澳门", "TW": "台湾", "SG": "新加坡", 
+      "JP": "日本", "KR": "韩国", "MY": "马来西亚", "TH": "泰国", "VN": "越南", 
+      "PH": "菲律宾", "ID": "印尼", "IN": "印度", "AU": "澳大利亚", "NZ": "新西兰",
+      "KH": "柬埔寨", "LA": "老挝", "MM": "缅甸", "PK": "巴基斯坦", "BD": "孟加拉",
+      "LK": "斯里兰卡", "KZ": "哈萨克斯坦", "UZ": "乌兹别克斯坦", "FJ": "斐济",
+      // 北美及南美
+      "US": "美国", "CA": "加拿大", "MX": "墨西哥", "BR": "巴西", "AR": "阿根廷", 
+      "CL": "智利", "CO": "哥伦比亚", "PE": "秘鲁", "UY": "乌拉圭", "PA": "巴拿马",
+      // 欧洲地区
+      "UK": "英国", "GB": "英国", "DE": "德国", "FR": "法国", "NL": "荷兰", 
+      "RU": "俄罗斯", "IT": "意大利", "ES": "西班牙", "CH": "瑞士", "SE": "瑞典", 
+      "NO": "挪威", "FI": "芬兰", "DK": "丹麦", "IE": "爱尔兰", "BE": "比利时", 
+      "AT": "奥地利", "PL": "波兰", "CZ": "捷克", "HU": "匈牙利", "RO": "罗马尼亚", 
+      "UA": "乌克兰", "TR": "土耳其", "GR": "希腊", "PT": "葡萄牙", "BG": "保加利亚",
+      "EE": "爱沙尼亚", "LV": "拉脱维亚", "LT": "立陶宛", "LU": "卢森堡", "IS": "冰岛",
+      "SK": "斯洛伐克", "SI": "斯洛文尼亚", "HR": "克罗地亚", "RS": "塞尔维亚", "CY": "塞浦路斯",
+      // 中东及非洲
+      "AE": "阿联酋", "SA": "沙特", "IL": "以色列", "ZA": "南非", "EG": "埃及", 
+      "MA": "摩洛哥", "KW": "科威特", "QA": "卡塔尔", "OM": "阿曼", "BH": "巴林",
+      "NG": "尼日利亚", "KE": "肯尼亚", "GH": "加纳", "DZ": "阿尔及利亚"
     };
 
-    // 核心中转/落地落地城市中文映射字典
+    // 🏙️ 【拉满】核心中转与数据中心城市高级汉化字典 (全小写键防错)
     const cityMap = {
-      "tokyo": "东京", "hong kong": "香港", "singapore": "新加坡", 
+      // 亚洲及大洋洲区域
+      "tokyo": "东京", "osaka": "大阪", "nagoya": "名古屋", "fukuoka": "福冈",
+      "hong kong": "香港", "hongkong": "香港", "taipei": "台北", "hsinchu": "新竹", 
+      "singapore": "新加坡", "seoul": "首尔", "incheon": "仁川", "macau": "澳门",
+      "bangkok": "曼谷", "kuala lumpur": "吉隆坡", "manila": "马尼拉", "jakarta": "雅加达",
+      "ho chi minh city": "胡志明市", "hanoi": "河内", "phnom penh": "金边",
+      "mumbai": "孟买", "bangalore": "班加罗尔", "chennai": "金奈", "new delhi": "新德里",
+      "sydney": "悉尼", "melbourne": "墨尔本", "brisbane": "布里斯班", "perth": "珀斯",
+      // 美洲核心云机房
       "los angeles": "洛杉矶", "san francisco": "旧金山", "new york": "纽约", 
-      "seattle": "西雅图", "london": "伦敦", "paris": "巴黎", 
-      "frankfurt": "法兰克福", "seoul": "首尔", "taipei": "台北", 
-      "bangkok": "曼谷", "sanjose": "圣开赛", "san jose": "圣克拉拉",
-      "santa clara": "圣克拉拉", "chicago": "芝加哥", "miami": "迈阿密",
-      "amsterdam": "阿姆斯特丹", "manila": "马尼拉", "mumbai": "孟买",
-      "osaka": "大阪", "seover": "首尔", "oregon": "俄勒冈", "ashburn": "阿什本"
+      "seattle": "西雅图", "sanjose": "圣何塞", "san jose": "圣何塞", "santa clara": "圣克拉拉", 
+      "chicago": "芝加哥", "miami": "迈阿密", "ashburn": "阿什本", "oregon": "俄勒冈", 
+      "dallas": "达拉斯", "atlanta": "亚特兰大", "phoenix": "凤凰城", "houston": "休斯敦",
+      "denver": "丹佛", "salt lake city": "盐湖城", "las vegas": "拉斯维加斯", "boston": "波士顿",
+      "toronto": "多伦多", "montreal": "蒙特利尔", "vancouver": "温哥华", "mexico city": "墨西哥城",
+      "sao paulo": "圣保罗", "rio de janeiro": "里约热内卢", "buenos aires": "布宜诺斯艾利斯", "santiago": "圣地亚哥",
+      // 欧洲核心区域
+      "frankfurt": "法兰克福", "london": "伦敦", "paris": "巴黎", "amsterdam": "阿姆斯特丹",
+      "manchester": "曼彻斯特", "berlin": "柏林", "munich": "慕尼黑", "hamburg": "汉堡",
+      "marseille": "马赛", "milan": "米兰", "rome": "罗马", "madrid": "马德里", "barcelona": "巴塞罗那",
+      "zurich": "苏黎世", "geneva": "日内瓦", "stockholm": "斯德哥尔摩", "oslo": "奥斯陆",
+      "helsinki": "赫尔辛基", "copenhagen": "哥本哈根", "dublin": "都柏林", "brussels": "布鲁塞尔",
+      "vienna": "维也纳", "warsaw": "华沙", "prague": "布拉格", "budapest": "布达佩斯",
+      "moscow": "莫斯科", "st petersburg": "圣彼得堡", "saint petersburg": "圣彼得堡",
+      "kiev": "基辅", "kyiv": "基辅", "istanbul": "伊斯坦布尔", "lisbon": "里斯本",
+      // 中东与非洲
+      "dubai": "迪拜", "abu dhabi": "阿布扎比", "riyadh": "利雅得", "jeddah": "吉达",
+      "tel aviv": "特拉维夫", "johannesburg": "约翰内斯堡", "cape town": "开普敦", "cairo": "开罗"
     };
 
     const cityName = fullData.city || "";
     const cnCountry = ccMap[cc.toUpperCase()] || fullData.country_name || "未知";
     const cnCity = cityMap[cityName.toLowerCase()] || cityName;
     
-    // 智能防重叠地名合并逻辑
     const finalLocationString = (cnCountry === cnCity || cnCity === "") ? cnCountry : `${cnCountry} ${cnCity}`;
 
     finalProxy = {
@@ -275,7 +303,6 @@ export default async function(ctx) {
     finalPurity = purData;
     finalUnlocks = { rNF, rDP, rTK, rGPT, rCL, rGM };
 
-    // 写入全新周期主缓存
     if (currentIP !== "获取失败" && fullData.ip) {
       await setCache(JSON.stringify({
         ip: currentIP,
@@ -327,13 +354,12 @@ export default async function(ctx) {
     ]
   });
 
-  // 7. UI 输出结构（这里为相关的 IP 槽位套上了 fmtIP 函数）
+  // 7. UI 输出结构
   return {
     type: 'widget', 
     padding: 14,
     backgroundColor: C.bg, 
     children: [
-      // 顶部 Header 栏
       { type: 'stack', direction: 'row', alignItems: 'center', gap: 6, children: [
           { type: 'image', src: 'sf-symbol:waveform.path.ecg', color: C.text, width: 16, height: 16 },
           { type: 'text', text: '网络诊断雷达', font: { size: 14, weight: 'bold' }, textColor: C.text },
@@ -342,26 +368,24 @@ export default async function(ctx) {
       ]},
       { type: 'spacer', length: 12 }, 
       
-      // 左右分栏核心网格
       { type: 'stack', direction: 'row', gap: 10, children: [
-          
-          // 【左边栏】：本地承载网络与影视
+          // 【左边栏】：本地网络
           { type: 'stack', direction: 'column', gap: 4.5, flex: 1, children: [
               Row(netIcon, C.cpu, "环境", netName, C.text),
               Row("wifi.router.fill", C.cpu, "网关", gateway, C.text),
-              Row("iphone", C.cpu, "内网", fmtIP(localIp), C.text),             // 🔍 适配内网可能出现的 IPv6
-              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), // 🔍 修复：本地公网 IPv6 智能缩写
+              Row("iphone", C.cpu, "内网", fmtIP(localIp), C.text),             
+              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), 
               Row("map.fill", C.cpu, "位置", localData.loc, C.text),
               Row("timer", C.cpu, "延迟", localDelay, C.text), 
               Row("play.tv.fill", C.cpu, "影视", textVideo, C.text) 
           ]},
 
-          // ✂️ 中央垂直分割线
+          // 中央垂直分割线
           { type: 'stack', width: 0.5, backgroundColor: C.barBg },
           
-          // 【右边栏】：中转代理出口与 AI 节点
+          // 【右边栏】：中转代理出口
           { type: 'stack', direction: 'column', gap: 4.5, flex: 1, children: [
-              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text), // 🔍 适配境外代理节点走 IPv6 出口的情况
+              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text), 
               Row("mappin.and.ellipse", C.mem, "落地", finalProxy.loc, C.text),
               Row("server.rack", C.mem, "厂商", finalProxy.isp, C.text),
               Row(nativeIc, nativeCol, "属性", nativeText, C.text), 
