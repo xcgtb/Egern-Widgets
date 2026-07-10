@@ -30,6 +30,18 @@ export default async function(ctx) {
     try { return JSON.parse(text); } catch { return {}; }
   };
 
+  // 🛠️ 新增：IP 地址动态缩短优化函数（防止 IPv6 挤压字号）
+  const fmtIP = (ip) => {
+    if (!ip || typeof ip !== 'string') return "获取失败";
+    // 判断是否为长 IPv6 地址
+    if (ip.includes(':') && ip.length > 16) {
+      const parts = ip.split(':');
+      // 取前两个段和最后一个段进行拼接，如 2409:8a70...5629
+      return parts.length > 2 ? `${parts[0]}:${parts[1]}...${parts[parts.length - 1]}` : ip;
+    }
+    return ip;
+  };
+
   const fmtProxyISP = (isp) => {
     if (!isp) return "未知";
     let s = String(isp);
@@ -114,7 +126,7 @@ export default async function(ctx) {
     try {
       const res = await ctx.http.get('https://v4.ident.me', { timeout: 3000 });
       const ip = (await res.text())?.trim();
-      return /^[0-9.]+$/.test(ip) ? ip : null;
+      return ip || null; // 移除纯 IPv4 正则校验，使其兼顾代理出口为 IPv6 的情况
     } catch { return null; }
   };
 
@@ -211,7 +223,7 @@ export default async function(ctx) {
   } else {
     // 🔄 缓存失效 / 穿透检测：发起流媒体检测与厂商画像查询
     const fetchProxyFull = async () => {
-      try { const res = await ctx.http.get('https://ipapi.co/json/', { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
+      try { const res = await ctx.http.get(`https://ipapi.co/${currentIP}/json/`, { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
     };
     const fetchPurityFull = async () => {
       try { const res = await ctx.http.get('https://my.ippure.com/v1/info', { timeout: 4000 }); return safeParse(await res.text()); } catch { return {}; }
@@ -241,9 +253,9 @@ export default async function(ctx) {
       "los angeles": "洛杉矶", "san francisco": "旧金山", "new york": "纽约", 
       "seattle": "西雅图", "london": "伦敦", "paris": "巴黎", 
       "frankfurt": "法兰克福", "seoul": "首尔", "taipei": "台北", 
-      "bangkok": "曼谷", "sanjose": "圣何塞", "san jose": "圣何塞",
+      "bangkok": "曼谷", "sanjose": "圣开赛", "san jose": "圣克拉拉",
       "santa clara": "圣克拉拉", "chicago": "芝加哥", "miami": "迈阿密",
-      "amsterdam": "阿姆斯坦丹", "manila": "马尼拉", "mumbai": "孟买",
+      "amsterdam": "阿姆斯特丹", "manila": "马尼拉", "mumbai": "孟买",
       "osaka": "大阪", "seover": "首尔", "oregon": "俄勒冈", "ashburn": "阿什本"
     };
 
@@ -251,7 +263,7 @@ export default async function(ctx) {
     const cnCountry = ccMap[cc.toUpperCase()] || fullData.country_name || "未知";
     const cnCity = cityMap[cityName.toLowerCase()] || cityName;
     
-    // 智能防重叠地名合并逻辑（如：新加坡 新新加坡 -> 新加坡）
+    // 智能防重叠地名合并逻辑
     const finalLocationString = (cnCountry === cnCity || cnCity === "") ? cnCountry : `${cnCountry} ${cnCity}`;
 
     finalProxy = {
@@ -315,7 +327,7 @@ export default async function(ctx) {
     ]
   });
 
-  // 7. UI 输出结构
+  // 7. UI 输出结构（这里为相关的 IP 槽位套上了 fmtIP 函数）
   return {
     type: 'widget', 
     padding: 14,
@@ -337,8 +349,8 @@ export default async function(ctx) {
           { type: 'stack', direction: 'column', gap: 4.5, flex: 1, children: [
               Row(netIcon, C.cpu, "环境", netName, C.text),
               Row("wifi.router.fill", C.cpu, "网关", gateway, C.text),
-              Row("iphone", C.cpu, "内网", localIp, C.text),
-              Row("globe.asia.australia.fill", C.cpu, "公网", localData.ip, C.text),
+              Row("iphone", C.cpu, "内网", fmtIP(localIp), C.text),             // 🔍 适配内网可能出现的 IPv6
+              Row("globe.asia.australia.fill", C.cpu, "公网", fmtIP(localData.ip), C.text), // 🔍 修复：本地公网 IPv6 智能缩写
               Row("map.fill", C.cpu, "位置", localData.loc, C.text),
               Row("timer", C.cpu, "延迟", localDelay, C.text), 
               Row("play.tv.fill", C.cpu, "影视", textVideo, C.text) 
@@ -349,7 +361,7 @@ export default async function(ctx) {
           
           // 【右边栏】：中转代理出口与 AI 节点
           { type: 'stack', direction: 'column', gap: 4.5, flex: 1, children: [
-              Row("paperplane.fill", C.mem, "出口", finalProxy.ip, C.text),
+              Row("paperplane.fill", C.mem, "出口", fmtIP(finalProxy.ip), C.text), // 🔍 适配境外代理节点走 IPv6 出口的情况
               Row("mappin.and.ellipse", C.mem, "落地", finalProxy.loc, C.text),
               Row("server.rack", C.mem, "厂商", finalProxy.isp, C.text),
               Row(nativeIc, nativeCol, "属性", nativeText, C.text), 
