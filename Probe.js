@@ -110,7 +110,6 @@ export default async function (ctx) {
       } catch (e) { console.log('BWH API Error:', e); }
     }
 
-    // 这里已经替换为 finalKey 来连接 SSH
     const session = await ctx.ssh.connect({
       host, port: Number(port || 22), username,
       ...(finalKey ? { privateKey: finalKey } : { password }),
@@ -341,16 +340,6 @@ export default async function (ctx) {
           ]},
           { type: 'stack', direction: 'column', gap: 3, children: [
             { type: 'stack', direction: 'row', alignItems: 'center', gap: 4, children: [
-              { type: 'image', src: 'sf-symbol:antenna.radiowaves.left.and.right', color: getTrafficColor(d.tfPct), width: 11, height: 11 },
-              { type: 'text', text: 'TRAF', font: { size: 11, weight: 'bold' }, textColor: C.text },
-              { type: 'text', text: `${d.tfPct.toFixed(1)}%`, font: { size: 11, weight: 'heavy', family: 'Menlo' }, textColor: getTrafficColor(d.tfPct) },
-              { type: 'spacer' },
-              { type: 'text', text: `${fmtBytes(d.tfUsed)} / ${fmtBytes(d.tfTotal)}`, font: { size: 10, family: 'Menlo', weight: 'medium' }, textColor: C.dim },
-            ]},
-            bar(d.tfPct, getTrafficColor(d.tfPct), 6),
-          ]},
-          { type: 'stack', direction: 'column', gap: 3, children: [
-            { type: 'stack', direction: 'row', alignItems: 'center', gap: 4, children: [
               { type: 'image', src: 'sf-symbol:internaldrive', color: C.disk, width: 11, height: 11 },
               { type: 'text', text: 'DSK', font: { size: 11, weight: 'bold' }, textColor: C.text },
               { type: 'text', text: `${d.diskPct}%`, font: { size: 11, weight: 'heavy', family: 'Menlo' }, textColor: C.disk },
@@ -358,6 +347,16 @@ export default async function (ctx) {
               { type: 'text', text: `${fmtBytes(d.diskUsed)} / ${fmtBytes(d.diskTotal)}`, font: { size: 10, family: 'Menlo', weight: 'medium' }, textColor: C.dim },
             ]},
             bar(d.diskPct, C.disk, 6),
+          ]},
+          { type: 'stack', direction: 'column', gap: 3, children: [
+            { type: 'stack', direction: 'row', alignItems: 'center', gap: 4, children: [
+              { type: 'image', src: 'sf-symbol:antenna.radiowaves.left.and.right', color: getTrafficColor(d.tfPct), width: 11, height: 11 },
+              { type: 'text', text: 'TRAF', font: { size: 11, weight: 'bold' }, textColor: C.text },
+              { type: 'text', text: `${d.tfPct.toFixed(1)}%`, font: { size: 11, weight: 'heavy', family: 'Menlo' }, textColor: getTrafficColor(d.tfPct) },
+              { type: 'spacer' },
+              { type: 'text', text: `${fmtBytes(d.tfUsed)} / ${fmtBytes(d.tfTotal)}`, font: { size: 10, family: 'Menlo', weight: 'medium' }, textColor: C.dim },
+            ]},
+            bar(d.tfPct, getTrafficColor(d.tfPct), 6),
           ]},
         ]},
         { type: 'spacer' },
@@ -393,15 +392,6 @@ export default async function (ctx) {
       bar(d.memPct, C.mem, 7),
       divider,
       { type: 'stack', direction: 'row', alignItems: 'center', gap: 6, children: [
-        { type: 'image', src: 'sf-symbol:antenna.radiowaves.left.and.right', color: getTrafficColor(d.tfPct), width: 14, height: 14 },
-        { type: 'text', text: 'TRAFFIC', font: { size: 12, weight: 'bold' }, textColor: C.text },
-        { type: 'text', text: `${d.tfPct.toFixed(1)}%`, font: { size: 12, weight: 'heavy', family: 'Menlo' }, textColor: getTrafficColor(d.tfPct) },
-        { type: 'spacer' },
-        { type: 'text', text: `${fmtBytes(d.tfUsed)} / ${fmtBytes(d.tfTotal)}`, font: { size: 11, family: 'Menlo', weight: 'medium' }, textColor: C.dim },
-      ]},
-      bar(d.tfPct, getTrafficColor(d.tfPct), 7),
-      divider,
-      { type: 'stack', direction: 'row', alignItems: 'center', gap: 6, children: [
         { type: 'image', src: 'sf-symbol:internaldrive', color: C.disk, width: 14, height: 14 },
         { type: 'text', text: 'STORAGE', font: { size: 12, weight: 'bold' }, textColor: C.text },
         { type: 'text', text: `${d.diskPct}%`, font: { size: 12, weight: 'heavy', family: 'Menlo' }, textColor: C.disk },
@@ -409,6 +399,15 @@ export default async function (ctx) {
         { type: 'text', text: `${fmtBytes(d.diskUsed)} / ${fmtBytes(d.diskTotal)}`, font: { size: 11, family: 'Menlo', weight: 'medium' }, textColor: C.dim },
       ]},
       bar(d.diskPct, C.disk, 7),
+      divider,
+      { type: 'stack', direction: 'row', alignItems: 'center', gap: 6, children: [
+        { type: 'image', src: 'sf-symbol:antenna.radiowaves.left.and.right', color: getTrafficColor(d.tfPct), width: 14, height: 14 },
+        { type: 'text', text: 'TRAFFIC', font: { size: 12, weight: 'bold' }, textColor: C.text },
+        { type: 'text', text: `${d.tfPct.toFixed(1)}%`, font: { size: 12, weight: 'heavy', family: 'Menlo' }, textColor: getTrafficColor(d.tfPct) },
+        { type: 'spacer' },
+        { type: 'text', text: `${fmtBytes(d.tfUsed)} / ${fmtBytes(d.tfTotal)}`, font: { size: 11, family: 'Menlo', weight: 'medium' }, textColor: C.dim },
+      ]},
+      bar(d.tfPct, getTrafficColor(d.tfPct), 7),
       { type: 'spacer' },
       footer,
     ],
